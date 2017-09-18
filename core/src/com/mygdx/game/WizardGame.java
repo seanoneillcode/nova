@@ -43,9 +43,9 @@ public class WizardGame extends ApplicationAdapter {
     private float hitboxTimer = -1.0f;
     private static final float PLAYER_SPEED = 32.0f;
     private static final float BULLET_SPEED = 80f;
-    private static final float SKELETON_SPEED = 16f;
-    private static final float HITBOX_COOLDOWN = 0.4f;
-    private static final float HITBOX_TIMER = 0.7f;
+    private static final float SKELETON_SPEED = 32f;
+    private static final float HITBOX_COOLDOWN = 0.25f;
+    private static final float HITBOX_TIMER = 0.5f;
     private BitmapFont font;
 
     private float screenWidth;
@@ -55,12 +55,12 @@ public class WizardGame extends ApplicationAdapter {
 
     private boolean isRight = true;
 
+    private Vector2 inputVector;
+
     private List<Bullet> bullets;
     private List<Enemy> enemies;
     private float shootCooldown;
     private static final float MAX_COOLDOWN = 0.2f;
-
-    private DIR playerDir = DIR.RIGHT;
 
     private int numberOfSkeletons = 4;
     private int wizardLife = 3;
@@ -71,6 +71,8 @@ public class WizardGame extends ApplicationAdapter {
     Sound enemyDeathSound;
     Sound loopSound;
     Sound loopSound2;
+
+    private Vector2 lastDirection;
 
     String slotA = "stab";
     String slotB = "gun";
@@ -126,6 +128,8 @@ public class WizardGame extends ApplicationAdapter {
         bullets = new ArrayList<Bullet>();
         enemies = new ArrayList<Enemy>();
         hitboxOffset = new Vector2();
+        inputVector = new Vector2();
+        lastDirection = new Vector2(1,0);
         resetGame();
 	}
 
@@ -326,23 +330,24 @@ public class WizardGame extends ApplicationAdapter {
 
     private void useSlot(String slot) {
         if (slot.equals("gun")) {
-            Vector2 offset = null;
-            Vector2 dir = null;
-            if (playerDir == DIR.LEFT) {
-                offset = playerPosition.cpy().add(-5, 2);
-                dir = new Vector2(-BULLET_SPEED, 0);
+            Vector2 offset = playerPosition.cpy();
+            Vector2 dir = new Vector2();
+
+            if (lastDirection.x < 0) {
+                offset = offset.add(-5, 2);
+                dir = dir.add(-BULLET_SPEED, 0);
             }
-            if (playerDir == DIR.RIGHT) {
-                offset = playerPosition.cpy().add(15, 2);
-                dir = new Vector2(BULLET_SPEED, 0);
+            if (lastDirection.x > 0) {
+                offset = offset.add(15, 2);
+                dir = dir.add(BULLET_SPEED, 0);
             }
-            if (playerDir == DIR.UP) {
-                offset = playerPosition.cpy().add(3, 15);
-                dir = new Vector2(0, BULLET_SPEED);
+            if (lastDirection.y < 0) {
+                offset = offset.add(3, 15);
+                dir = dir.add(0, BULLET_SPEED);
             }
-            if (playerDir == DIR.DOWN) {
-                offset = playerPosition.cpy().add(3, -8);
-                dir = new Vector2(0, -BULLET_SPEED);
+            if (lastDirection.y > 0) {
+                offset = offset.add(3, -8);
+                dir = dir.add(0, -BULLET_SPEED);
             }    
             if (offset != null && dir != null) {
                 if (shootCooldown < 0) {
@@ -354,22 +359,34 @@ public class WizardGame extends ApplicationAdapter {
         if (slot.equals("stab")) {
             // image is 14 x 6
             Vector2 offset = new Vector2();
-            if (playerDir == DIR.LEFT) {
-                offset = new Vector2(-15,0);
+            if (lastDirection.x < 0) {
+                offset = offset.add(-15,0);
                 stabSprite.setRotation(180);
             }
-            if (playerDir == DIR.RIGHT) {
-                offset = new Vector2(15,0);
+            if (lastDirection.x > 0) {
+                offset = offset.add(15,0);
                 stabSprite.setRotation(0);
             }
-            if (playerDir == DIR.UP) {
-                offset = new Vector2(0, 15);
+            if (lastDirection.y < 0) {
+                offset = offset.add(0, 15);
                 stabSprite.setRotation(90);
             }
-            if (playerDir == DIR.DOWN) {
-                offset = new Vector2(0, -15);
+            if (lastDirection.y > 0) {
+                offset = offset.add(0, -15);
                 stabSprite.setRotation(270);
             }
+            if (lastDirection.x < 0 && lastDirection.y > 0) {
+                stabSprite.setRotation(225);
+            }
+            if (lastDirection.x < 0 && lastDirection.y < 0) {
+                stabSprite.setRotation(135);
+            }
+            if (lastDirection.x > 0 && lastDirection.y > 0) {
+                stabSprite.setRotation(315);
+            }
+            if (lastDirection.x > 0 && lastDirection.y < 0) {
+                stabSprite.setRotation(45);
+            }            
             addHitbox(offset);
         }
     }
@@ -389,15 +406,22 @@ public class WizardGame extends ApplicationAdapter {
         boolean isUpPressed = Gdx.input.isKeyPressed(Input.Keys.UP);
         boolean isDownPressed = Gdx.input.isKeyPressed(Input.Keys.DOWN);
 
+        inputVector.x = 0;
+        inputVector.y = 0;
+
         shootCooldown = shootCooldown - Gdx.graphics.getDeltaTime();
         boolean canChangeDir = hitboxTimer < 0;
+        if (!canChangeDir) {
+            actualSpeed = 0;
+        }
         if (isLeftPressed) {
             if (canChangeDir) {
                 if (isRight) {
                     wizard.flip(true, false);
                 }
                 isRight = false;
-                playerDir = DIR.LEFT;
+                inputVector.x = inputVector.x - 1;
+                lastDirection = inputVector.cpy();
                 currentWizard = wizard;
             }
             playerPosition.add(-actualSpeed, 0);
@@ -408,21 +432,24 @@ public class WizardGame extends ApplicationAdapter {
                     wizard.flip(true, false);
                 }
                 isRight = true;   
-                playerDir = DIR.RIGHT;
+                inputVector.x = inputVector.x + 1;
+                lastDirection = inputVector.cpy();
                 currentWizard = wizard;
             }
             playerPosition.add(actualSpeed, 0);
         }
         if (isUpPressed) {
             if (canChangeDir) {
-                playerDir = DIR.UP;
+                inputVector.y = inputVector.y - 1;
+                lastDirection = inputVector.cpy();
                 currentWizard = upWizard;
             }
             playerPosition.add(0, actualSpeed);
         }
         if (isDownPressed) {
             if (canChangeDir) {
-                playerDir = DIR.DOWN;
+                inputVector.y = inputVector.y + 1;
+                lastDirection = inputVector.cpy();
                 currentWizard = downWizard;
             }
             playerPosition.add(0, -actualSpeed);
@@ -441,10 +468,4 @@ public class WizardGame extends ApplicationAdapter {
         }
 	}
 
-	private enum DIR {
-        UP,
-        DOWN,
-        LEFT,
-        RIGHT
-    }
 }
