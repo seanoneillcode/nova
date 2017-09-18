@@ -17,6 +17,7 @@ import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
+import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
@@ -32,13 +33,18 @@ public class WizardGame extends ApplicationAdapter {
     private TextureRegion wizard;
     private TextureRegion downWizard;
     private TextureRegion upWizard;
-
+    private Sprite stabSprite;
     private Texture skeleton;
     private Texture bolt;
     private Vector2 playerPosition;
+    private Vector2 hitboxOffset;
+    private Vector2 hitboxPos;
+    private float hitboxTimer = -1.0f;
     private static final float PLAYER_SPEED = 32.0f;
     private static final float BULLET_SPEED = 80f;
     private static final float SKELETON_SPEED = 16f;
+    private static final float HITBOX_COOLDOWN = 0.4f;
+    private static final float HITBOX_TIMER = 0.7f;
     private BitmapFont font;
 
     private float screenWidth;
@@ -65,7 +71,7 @@ public class WizardGame extends ApplicationAdapter {
     Sound loopSound;
     Sound loopSound2;
 
-    String slotA = "gun";
+    String slotA = "stab";
     String slotB = "gun";
 
     Preferences prefs;
@@ -102,6 +108,8 @@ public class WizardGame extends ApplicationAdapter {
         wizard = new TextureRegion(new Texture("wizard.png"));
         upWizard = new TextureRegion(new Texture("wizard-up.png"));
         downWizard = new TextureRegion(new Texture("wizard-down.png"));
+        stabSprite = new Sprite(new Texture("stab.png"));
+        stabSprite.setCenter(7,3);
         bolt = new Texture("bolt.png");
         skeleton = new Texture("skeleton.png");
         playerPosition = getRandomPosition();
@@ -194,6 +202,10 @@ public class WizardGame extends ApplicationAdapter {
             for (Enemy e : enemies) {
                 e.sprite.draw(batch);
             }
+            if (hitboxTimer >= HITBOX_COOLDOWN) {
+                stabSprite.setPosition(hitboxPos.x, hitboxPos.y);
+                stabSprite.draw(batch);               
+            }
             font.draw(batch, "SOULS : " + wizardLife, 200, 180);
             font.draw(batch, "DESTROYED : " + enemiesKilled, 4, 180);
         } else {
@@ -217,7 +229,8 @@ public class WizardGame extends ApplicationAdapter {
 	}
 
     private void update() {
-        time = time - Gdx.graphics.getDeltaTime();
+        float delta = Gdx.graphics.getDeltaTime();
+        time = time - delta;
         if (playerPosition.x < 0) {
             playerPosition.x = 0;
         }
@@ -242,7 +255,18 @@ public class WizardGame extends ApplicationAdapter {
             }
         }
 
-        Rectangle rect = new Rectangle(playerPosition.x, playerPosition.y, 16, 16);
+        if (hitboxTimer >= 0) {
+            hitboxTimer = hitboxTimer - delta;
+        }
+        if (hitboxTimer >= HITBOX_COOLDOWN) {
+            hitboxPos = playerPosition.cpy().add(hitboxOffset);
+            if (enemyCollision(stabSprite.getBoundingRectangle())) {
+                //hitboxTimer = -1;                
+            //    hitboxCooldown = HITBOX_COOLDOWN;
+            }            
+        }
+
+        Rectangle rect = new Rectangle(playerPosition.x + 4, playerPosition.y + 4, 10, 10);
 
         if (enemyCollision(rect)) {
             wizardLife = wizardLife - 1;
@@ -255,7 +279,7 @@ public class WizardGame extends ApplicationAdapter {
                 }
             }
         }
-        hurtCooldown = hurtCooldown - Gdx.graphics.getDeltaTime();
+        hurtCooldown = hurtCooldown - delta;
 
         Iterator<Enemy> iter2 = enemies.listIterator();
         while (iter2.hasNext()) {
@@ -273,7 +297,7 @@ public class WizardGame extends ApplicationAdapter {
             numberOfSkeletons++;
             addWaveOfSkeletons();
         }
-        waitStart = waitStart - Gdx.graphics.getDeltaTime();
+        waitStart = waitStart - delta;
         if (waitStart < 0 && !started) {
             started = true;
             addWaveOfSkeletons();
@@ -335,6 +359,34 @@ public class WizardGame extends ApplicationAdapter {
                 }
             }
         }
+        if (slot.equals("stab")) {
+            // image is 14 x 6
+            Vector2 offset = new Vector2();
+            if (playerDir == DIR.LEFT) {
+                offset = new Vector2(-15,0);
+                stabSprite.setRotation(180);
+            }
+            if (playerDir == DIR.RIGHT) {
+                offset = new Vector2(15,0);
+                stabSprite.setRotation(0);
+            }
+            if (playerDir == DIR.UP) {
+                offset = new Vector2(0, 15);
+                stabSprite.setRotation(90);
+            }
+            if (playerDir == DIR.DOWN) {
+                offset = new Vector2(0, -15);
+                stabSprite.setRotation(270);
+            }
+            addHitbox(offset);
+        }
+    }
+
+    private void addHitbox(Vector2 offset) {
+        if (hitboxTimer < 0) {
+            hitboxTimer = HITBOX_TIMER;
+            hitboxOffset = offset.cpy();
+        }
     }
 
 	private void handleInput() {
@@ -346,21 +398,25 @@ public class WizardGame extends ApplicationAdapter {
         boolean isDownPressed = Gdx.input.isKeyPressed(Input.Keys.DOWN);
 
         shootCooldown = shootCooldown - Gdx.graphics.getDeltaTime();
-
+        boolean canChangeDir = hitboxTimer < 0;
         if (isLeftPressed) {
-            if (isRight) {
-                wizard.flip(true, false);
+            if (canChangeDir) {
+                if (isRight) {
+                    wizard.flip(true, false);
+                }
+                isRight = false;
+                playerDir = DIR.LEFT;
             }
-            isRight = false;
-            playerDir = DIR.LEFT;
             playerPosition.add(-actualSpeed, 0);
         }
         if (isRightPressed) {
-            if (!isRight) {
-                wizard.flip(true, false);
+            if (canChangeDir) {
+                if (!isRight) {
+                    wizard.flip(true, false);
+                }
+                isRight = true;   
+                playerDir = DIR.RIGHT;
             }
-            isRight = true;   
-            playerDir = DIR.RIGHT;
             playerPosition.add(actualSpeed, 0);
         }
         if (isUpPressed) {
