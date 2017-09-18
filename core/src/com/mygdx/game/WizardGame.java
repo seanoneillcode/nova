@@ -61,10 +61,12 @@ public class WizardGame extends ApplicationAdapter {
 
     Sound wizardDeathSound;
     Sound wizardShootSound;
-    Sound deathScreamSound;
     Sound enemyDeathSound;
     Sound loopSound;
     Sound loopSound2;
+
+    String slotA = "gun";
+    String slotB = "gun";
 
     Preferences prefs;
     int previousHighScore;
@@ -75,6 +77,8 @@ public class WizardGame extends ApplicationAdapter {
     private static final float WAIT_START_COOLDOWN = 2.0f;
     private boolean started;
 
+    private boolean soundEffectsOn = false;
+
     @Override
 	public void create () {
         prefs = Gdx.app.getPreferences("WizardGamePreferences");
@@ -83,9 +87,9 @@ public class WizardGame extends ApplicationAdapter {
         enemyDeathSound = Gdx.audio.newSound(Gdx.files.internal("death-scream.wav"));
         wizardShootSound = Gdx.audio.newSound(Gdx.files.internal("wizard-shoot.wav"));
         wizardDeathSound = Gdx.audio.newSound(Gdx.files.internal("wizard-hurt.wav"));
-        loopSound = Gdx.audio.newSound(Gdx.files.internal("bad-loop.wav"));
+        //loopSound = Gdx.audio.newSound(Gdx.files.internal("bad-loop.wav"));
         //loopSound.loop(1.0f);
-        loopSound2 = Gdx.audio.newSound(Gdx.files.internal("bad-loop2.wav"));
+        // loopSound2 = Gdx.audio.newSound(Gdx.files.internal("bad-loop2.wav"));
         //loopSound2.loop(1.0f);
 
         float w = Gdx.graphics.getWidth();
@@ -120,11 +124,25 @@ public class WizardGame extends ApplicationAdapter {
         return new Vector2(xpos, ypos);
     }
 
+    private void playSound(Sound sound) {
+        if (!soundEffectsOn) {
+            return;
+        }
+        if (sound.equals(wizardDeathSound)) {
+            sound.play(1.0f);
+        }
+        if (sound.equals(wizardShootSound)) {
+            sound.play(0.3f, MathUtils.random(0.8f,1.2f), 0.5f);
+        }
+        if (sound.equals(enemyDeathSound)) {
+            sound.play(0.3f, MathUtils.random(0.8f,1.2f), 0.5f);
+        }
+    }
 
     private void addBullet(Vector2 dir, Vector2 pos) {
         Bullet b = new Bullet(bolt, dir, pos);
         bullets.add(b);
-        wizardShootSound.play(0.3f, MathUtils.random(0.8f,1.2f), 0.5f);
+        playSound(wizardShootSound);
     }
 
     private void addSkeleton() {
@@ -228,7 +246,7 @@ public class WizardGame extends ApplicationAdapter {
 
         if (enemyCollision(rect)) {
             wizardLife = wizardLife - 1;
-            wizardDeathSound.play(1.0f);
+            playSound(wizardDeathSound);
             hurtCooldown = HURT_COOL_DOWN;
             if (wizardLife < 1) {
                 if (enemiesKilled > previousHighScore) {
@@ -247,7 +265,7 @@ public class WizardGame extends ApplicationAdapter {
                 iter2.remove();
                 enemiesKilled = enemiesKilled + 1;
                 if (hurtCooldown < 0) {
-                    enemyDeathSound.play(0.3f, MathUtils.random(0.8f,1.2f), 0.5f);
+                    playSound(enemyDeathSound);
                 }
             }
         }
@@ -290,6 +308,26 @@ public class WizardGame extends ApplicationAdapter {
         }
     }
 
+    private void useSlot(String slot) {
+        if (slot.equals("gun")) {
+            Vector2 offset = null;
+            Vector2 dir = null;
+            if (playerDir == DIR.LEFT) {
+                offset = playerPosition.cpy().add(-5, 2);
+                dir = new Vector2(-BULLET_SPEED, 0);
+            } else {
+                offset = playerPosition.cpy().add(15, 2);
+                dir = new Vector2(BULLET_SPEED, 0);
+            }
+            if (offset != null && dir != null) {
+                if (shootCooldown < 0) {
+                    shootCooldown = MAX_COOLDOWN;
+                    addBullet(dir, offset);
+                }
+            }
+        }
+    }
+
 	private void handleInput() {
         float actualSpeed = PLAYER_SPEED * Gdx.graphics.getDeltaTime();
 
@@ -298,10 +336,22 @@ public class WizardGame extends ApplicationAdapter {
         boolean isUpPressed = Gdx.input.isKeyPressed(Input.Keys.UP);
         boolean isDownPressed = Gdx.input.isKeyPressed(Input.Keys.DOWN);
 
+        shootCooldown = shootCooldown - Gdx.graphics.getDeltaTime();
+
         if (isLeftPressed) {
+            if (isRight) {
+                wizard.flip(true, false);
+            }
+            isRight = false;
+            playerDir = DIR.LEFT;
             playerPosition.add(-actualSpeed, 0);
         }
         if (isRightPressed) {
+            if (!isRight) {
+                wizard.flip(true, false);
+            }
+            isRight = true;   
+            playerDir = DIR.RIGHT;
             playerPosition.add(actualSpeed, 0);
         }
         if (isUpPressed) {
@@ -310,43 +360,24 @@ public class WizardGame extends ApplicationAdapter {
         if (isDownPressed) {
             playerPosition.add(0, -actualSpeed);
         }
-        Vector2 offset = null;
-        Vector2 dir = null;
-        if (Gdx.input.isKeyPressed(Input.Keys.W)) {
-            offset = playerPosition.cpy().add(3, 15);
-            dir = new Vector2(0, BULLET_SPEED);
-            playerDir = DIR.UP;
-        }
+        // Vector2 offset = null;
+        // Vector2 dir = null;
+        // if (Gdx.input.isKeyPressed(Input.Keys.W)) {
+        //     offset = playerPosition.cpy().add(3, 15);
+        //     dir = new Vector2(0, BULLET_SPEED);
+        //     playerDir = DIR.UP;
+        // }
+        // if (Gdx.input.isKeyPressed(Input.Keys.S)) {
+        //     offset = playerPosition.cpy().add(3, -8);
+        //     dir = new Vector2(0, -BULLET_SPEED);
+        //     playerDir = DIR.DOWN;
+        // }
         if (Gdx.input.isKeyPressed(Input.Keys.S)) {
-            offset = playerPosition.cpy().add(3, -8);
-            dir = new Vector2(0, -BULLET_SPEED);
-            playerDir = DIR.DOWN;
-        }
-        if (Gdx.input.isKeyPressed(Input.Keys.A)) {
-            offset = playerPosition.cpy().add(-5, 2);
-            dir = new Vector2(-BULLET_SPEED, 0);
-            if (isRight) {
-                wizard.flip(true, false);
-            }
-            isRight = false;
-            playerDir = DIR.LEFT;
+            useSlot(slotA); 
         }
         if (Gdx.input.isKeyPressed(Input.Keys.D)) {
-            offset = playerPosition.cpy().add(15, 2);
-            dir = new Vector2(BULLET_SPEED, 0);
-            if (!isRight) {
-                wizard.flip(true, false);
-            }
-            isRight = true;
-            playerDir = DIR.RIGHT;
+            useSlot(slotB);
         }
-        if (offset != null && dir != null) {
-            if (shootCooldown < 0) {
-                shootCooldown = MAX_COOLDOWN;
-                addBullet(dir, offset);
-            }
-        }
-        shootCooldown = shootCooldown - Gdx.graphics.getDeltaTime();
         if (Gdx.input.isKeyPressed(Input.Keys.ESCAPE)) {
             Gdx.app.exit();
         }
