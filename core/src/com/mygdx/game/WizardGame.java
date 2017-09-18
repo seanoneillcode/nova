@@ -33,6 +33,7 @@ public class WizardGame extends ApplicationAdapter {
     private TextureRegion wizard;
     private TextureRegion downWizard;
     private TextureRegion upWizard;
+    private TextureRegion currentWizard;
     private Sprite stabSprite;
     private Texture skeleton;
     private Texture bolt;
@@ -110,6 +111,7 @@ public class WizardGame extends ApplicationAdapter {
         downWizard = new TextureRegion(new Texture("wizard-down.png"));
         stabSprite = new Sprite(new Texture("stab.png"));
         stabSprite.setCenter(7,3);
+        currentWizard = wizard;
         bolt = new Texture("bolt.png");
         skeleton = new Texture("skeleton.png");
         playerPosition = getRandomPosition();
@@ -123,6 +125,7 @@ public class WizardGame extends ApplicationAdapter {
         screenHeight = Gdx.graphics.getHeight();
         bullets = new ArrayList<Bullet>();
         enemies = new ArrayList<Enemy>();
+        hitboxOffset = new Vector2();
         resetGame();
 	}
 
@@ -184,18 +187,7 @@ public class WizardGame extends ApplicationAdapter {
 		batch.begin();
         if (wizardLife > 0) {
             update();
-            switch (playerDir) {
-                case RIGHT:
-                case LEFT:
-                    batch.draw(wizard, playerPosition.x, playerPosition.y);
-                    break;
-                case UP:
-                    batch.draw(upWizard, playerPosition.x, playerPosition.y);
-                    break;
-                case DOWN:
-                    batch.draw(downWizard, playerPosition.x, playerPosition.y);
-                    break;
-            }
+            batch.draw(currentWizard, playerPosition.x, playerPosition.y);
             for (Bullet b : bullets) {
                 b.sprite.draw(batch);
             }
@@ -203,7 +195,6 @@ public class WizardGame extends ApplicationAdapter {
                 e.sprite.draw(batch);
             }
             if (hitboxTimer >= HITBOX_COOLDOWN) {
-                stabSprite.setPosition(hitboxPos.x, hitboxPos.y);
                 stabSprite.draw(batch);               
             }
             font.draw(batch, "SOULS : " + wizardLife, 200, 180);
@@ -258,8 +249,9 @@ public class WizardGame extends ApplicationAdapter {
         if (hitboxTimer >= 0) {
             hitboxTimer = hitboxTimer - delta;
         }
+        hitboxPos = playerPosition.cpy().add(hitboxOffset);
+        stabSprite.setPosition(hitboxPos.x, hitboxPos.y);
         if (hitboxTimer >= HITBOX_COOLDOWN) {
-            hitboxPos = playerPosition.cpy().add(hitboxOffset);
             if (enemyCollision(stabSprite.getBoundingRectangle())) {
                 //hitboxTimer = -1;                
             //    hitboxCooldown = HITBOX_COOLDOWN;
@@ -406,6 +398,7 @@ public class WizardGame extends ApplicationAdapter {
                 }
                 isRight = false;
                 playerDir = DIR.LEFT;
+                currentWizard = wizard;
             }
             playerPosition.add(-actualSpeed, 0);
         }
@@ -416,15 +409,22 @@ public class WizardGame extends ApplicationAdapter {
                 }
                 isRight = true;   
                 playerDir = DIR.RIGHT;
+                currentWizard = wizard;
             }
             playerPosition.add(actualSpeed, 0);
         }
         if (isUpPressed) {
-            playerDir = DIR.UP;
+            if (canChangeDir) {
+                playerDir = DIR.UP;
+                currentWizard = upWizard;
+            }
             playerPosition.add(0, actualSpeed);
         }
         if (isDownPressed) {
-            playerDir = DIR.DOWN;
+            if (canChangeDir) {
+                playerDir = DIR.DOWN;
+                currentWizard = downWizard;
+            }
             playerPosition.add(0, -actualSpeed);
         }
         if (Gdx.input.isKeyPressed(Input.Keys.S)) {
