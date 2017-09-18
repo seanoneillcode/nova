@@ -3,6 +3,7 @@ package com.mygdx.game;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.lang.Math;
 
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
@@ -21,6 +22,7 @@ import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.math.Interpolation;
 import com.mygdx.game.core.Bullet;
 import com.mygdx.game.core.Enemy;
 
@@ -40,12 +42,17 @@ public class WizardGame extends ApplicationAdapter {
     private Vector2 playerPosition;
     private Vector2 hitboxOffset;
     private Vector2 hitboxPos;
+    private Vector2 dashMovement;
+    private float dashTimer;
     private float hitboxTimer = -1.0f;
     private static final float PLAYER_SPEED = 32.0f;
     private static final float BULLET_SPEED = 80f;
     private static final float SKELETON_SPEED = 32f;
     private static final float HITBOX_COOLDOWN = 0.25f;
     private static final float HITBOX_TIMER = 0.5f;
+    private static final float DASH_TIMER = 2.0f;
+    private static final float INITIAL_DASH = 2.4f;
+    private static final float DASH_FRICTION = 0.92f;
     private BitmapFont font;
 
     private float screenWidth;
@@ -74,8 +81,8 @@ public class WizardGame extends ApplicationAdapter {
 
     private Vector2 lastDirection;
 
-    String slotA = "stab";
-    String slotB = "gun";
+    String slotA = "dash";
+    String slotB = "stab";
 
     Preferences prefs;
     int previousHighScore;
@@ -130,6 +137,7 @@ public class WizardGame extends ApplicationAdapter {
         hitboxOffset = new Vector2();
         inputVector = new Vector2();
         lastDirection = new Vector2(1,0);
+        dashMovement = new Vector2();
         resetGame();
 	}
 
@@ -262,6 +270,24 @@ public class WizardGame extends ApplicationAdapter {
             }            
         }
 
+
+
+        // dashMovement
+        playerPosition.add(dashMovement.x, dashMovement.y);
+        dashMovement.x = dashMovement.x * DASH_FRICTION;
+        dashMovement.y = dashMovement.y * DASH_FRICTION;
+
+        if (dashTimer >= 0) {
+            dashTimer = dashTimer - delta;            
+        }
+
+        if (Math.abs(dashMovement.x) < 0.2f) {
+            dashMovement.x = 0;
+        }
+        if (Math.abs(dashMovement.y) < 0.2f) {
+            dashMovement.y = 0;
+        }
+
         Rectangle rect = new Rectangle(playerPosition.x + 4, playerPosition.y + 4, 10, 10);
 
         if (enemyCollision(rect)) {
@@ -388,6 +414,13 @@ public class WizardGame extends ApplicationAdapter {
                 stabSprite.setRotation(45);
             }            
             addHitbox(offset);
+        }
+        if (slot.equals("dash")) {
+            if (dashTimer < 0) {
+                dashMovement = lastDirection.cpy().scl(INITIAL_DASH);
+                dashMovement.y = dashMovement.y * -1;
+                dashTimer = DASH_TIMER;
+            }
         }
     }
 
