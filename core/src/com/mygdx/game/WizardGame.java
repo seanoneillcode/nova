@@ -38,7 +38,7 @@ public class WizardGame extends ApplicationAdapter {
     private Vector2 playerPosition;
     private static final float PLAYER_SPEED = 32.0f;
     private static final float BULLET_SPEED = 80f;
-    private static final float SKELETON_SPEED = 32f;
+    private static final float SKELETON_SPEED = 16f;
     private BitmapFont font;
 
     private float screenWidth;
@@ -315,10 +315,19 @@ public class WizardGame extends ApplicationAdapter {
             if (playerDir == DIR.LEFT) {
                 offset = playerPosition.cpy().add(-5, 2);
                 dir = new Vector2(-BULLET_SPEED, 0);
-            } else {
+            }
+            if (playerDir == DIR.RIGHT) {
                 offset = playerPosition.cpy().add(15, 2);
                 dir = new Vector2(BULLET_SPEED, 0);
             }
+            if (playerDir == DIR.UP) {
+                offset = playerPosition.cpy().add(3, 15);
+                dir = new Vector2(0, BULLET_SPEED);
+            }
+            if (playerDir == DIR.DOWN) {
+                offset = playerPosition.cpy().add(3, -8);
+                dir = new Vector2(0, -BULLET_SPEED);
+            }    
             if (offset != null && dir != null) {
                 if (shootCooldown < 0) {
                     shootCooldown = MAX_COOLDOWN;
@@ -355,23 +364,13 @@ public class WizardGame extends ApplicationAdapter {
             playerPosition.add(actualSpeed, 0);
         }
         if (isUpPressed) {
+            playerDir = DIR.UP;
             playerPosition.add(0, actualSpeed);
         }
         if (isDownPressed) {
+            playerDir = DIR.DOWN;
             playerPosition.add(0, -actualSpeed);
         }
-        // Vector2 offset = null;
-        // Vector2 dir = null;
-        // if (Gdx.input.isKeyPressed(Input.Keys.W)) {
-        //     offset = playerPosition.cpy().add(3, 15);
-        //     dir = new Vector2(0, BULLET_SPEED);
-        //     playerDir = DIR.UP;
-        // }
-        // if (Gdx.input.isKeyPressed(Input.Keys.S)) {
-        //     offset = playerPosition.cpy().add(3, -8);
-        //     dir = new Vector2(0, -BULLET_SPEED);
-        //     playerDir = DIR.DOWN;
-        // }
         if (Gdx.input.isKeyPressed(Input.Keys.S)) {
             useSlot(slotA); 
         }
