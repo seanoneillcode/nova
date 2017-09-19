@@ -46,7 +46,7 @@ public class WizardGame extends ApplicationAdapter {
     private Vector2 hitboxPos;
     private Vector2 dashMovement;
     private float dashTimer;
-    private float hitboxTimer = -1.0f;
+    private float hitboxTimer;
     private static final float PLAYER_SPEED = 32.0f;
     private static final float BULLET_SPEED = 80f;
     private static final float SKELETON_SPEED = 32f;
@@ -55,6 +55,9 @@ public class WizardGame extends ApplicationAdapter {
     private static final float DASH_TIMER = 2.0f;
     private static final float INITIAL_DASH = 2.4f;
     private static final float DASH_FRICTION = 0.92f;
+    private static final float MAX_COOLDOWN = 0.2f;
+    private static final float HURT_COOL_DOWN = 1f;
+    private static final float WAIT_START_COOLDOWN = 2.0f;
     private BitmapFont font;
 
     private float screenWidth;
@@ -69,7 +72,6 @@ public class WizardGame extends ApplicationAdapter {
     private List<Bullet> bullets;
     private List<Enemy> enemies;
     private float shootCooldown;
-    private static final float MAX_COOLDOWN = 0.2f;
 
     private int numberOfSkeletons = 4;
     private int wizardLife = 100;
@@ -91,11 +93,8 @@ public class WizardGame extends ApplicationAdapter {
     int previousHighScore;
 
     float hurtCooldown = 0;
-    private static final float HURT_COOL_DOWN = 1f;
     float waitStart = 0;
-    private static final float WAIT_START_COOLDOWN = 2.0f;
     private boolean started;
-
     private boolean soundEffectsOn = false;
 
     @Override
@@ -213,10 +212,10 @@ public class WizardGame extends ApplicationAdapter {
             if (hitboxTimer >= HITBOX_COOLDOWN) {
                 stabSprite.draw(batch);               
             }
-            font.draw(batch, "SOULS : " + wizardLife, 200, 180);
+            font.draw(batch, "HEALTH : " + wizardLife, 200, 180);
             font.draw(batch, "DESTROYED : " + enemiesKilled, 4, 180);
         } else {
-            font.draw(batch, "YOU RAN OUT OF SOULS", 80, 158);
+            font.draw(batch, "YOU RAN OUT OF Health", 80, 158);
             font.draw(batch, "YOU DESTROYED  " + enemiesKilled + "  ENEMIES", 70, 128);
             font.draw(batch, "PRESS SPACE TO PLAY AGAIN", 70, 68);
             if (enemiesKilled == previousHighScore) {
@@ -227,16 +226,19 @@ public class WizardGame extends ApplicationAdapter {
         }
 
 		batch.end();
-        if (slotA.equals("dash") || slotB.equals("dash")) {
-            shapeRenderer.begin(ShapeType.Filled);
-            float progress = 64 - ((dashTimer / DASH_TIMER) * 64);
-            if (progress < 64) {
-                shapeRenderer.setColor(progress, 0, 0, 1);
-            } else {
-                shapeRenderer.setColor(0, 1, 0, 1);
-            }
-            shapeRenderer.rect((screenWidth * 0.5f) - 32, screenHeight - 32, progress, 8);
-            shapeRenderer.end();
+
+        if (wizardLife > 0) {
+            if (slotA.equals("dash") || slotB.equals("dash")) {
+                shapeRenderer.begin(ShapeType.Filled);
+                float progress = 64 - ((dashTimer / DASH_TIMER) * 64);
+                if (progress < 64) {
+                    shapeRenderer.setColor(progress / 72, 0, 0, 1);
+                } else {
+                    shapeRenderer.setColor(0.8f, 0.8f, 0, 1);
+                }
+                shapeRenderer.rect((screenWidth * 0.5f) - 32, screenHeight - 32, progress, 8);
+                shapeRenderer.end();
+            }            
         }
 	}
 	
@@ -354,13 +356,15 @@ public class WizardGame extends ApplicationAdapter {
 
     private void resetGame() {
         waitStart = WAIT_START_COOLDOWN;
-        wizardLife = 3;
+        wizardLife = 100;
         playerPosition = new Vector2(128, 128);
         enemies.clear();
         bullets.clear();
         enemiesKilled = 0;
         numberOfSkeletons = 4;
         started = false;
+        dashTimer = 
+        hitboxTimer = -1.0f;
     }
 
     private void addWaveOfSkeletons() {
