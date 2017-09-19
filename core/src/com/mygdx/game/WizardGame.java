@@ -18,6 +18,8 @@ import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
+import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.badlogic.gdx.graphics.glutils.ShapeRenderer.ShapeType;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Rectangle;
@@ -70,7 +72,7 @@ public class WizardGame extends ApplicationAdapter {
     private static final float MAX_COOLDOWN = 0.2f;
 
     private int numberOfSkeletons = 4;
-    private int wizardLife = 3;
+    private int wizardLife = 100;
     private int enemiesKilled = 0;
 
     Sound wizardDeathSound;
@@ -78,6 +80,7 @@ public class WizardGame extends ApplicationAdapter {
     Sound enemyDeathSound;
     Sound loopSound;
     Sound loopSound2;
+    private ShapeRenderer shapeRenderer;
 
     private Vector2 lastDirection;
 
@@ -107,7 +110,7 @@ public class WizardGame extends ApplicationAdapter {
         //loopSound.loop(1.0f);
         // loopSound2 = Gdx.audio.newSound(Gdx.files.internal("bad-loop2.wav"));
         //loopSound2.loop(1.0f);
-
+        shapeRenderer = new ShapeRenderer();
         float w = Gdx.graphics.getWidth();
         float h = Gdx.graphics.getHeight();
         camera = new OrthographicCamera(WORLD_WIDTH, WORLD_HEIGHT * (h / w));
@@ -192,6 +195,7 @@ public class WizardGame extends ApplicationAdapter {
 	public void render () {
         camera.update();
         batch.setProjectionMatrix(camera.combined);
+        // shapeRenderer.setProjectionMatrix(camera.combined);
         handleInput();
 
 		Gdx.gl.glClearColor(0, 0, 0, 1);
@@ -223,6 +227,17 @@ public class WizardGame extends ApplicationAdapter {
         }
 
 		batch.end();
+        if (slotA.equals("dash") || slotB.equals("dash")) {
+            shapeRenderer.begin(ShapeType.Filled);
+            float progress = 64 - ((dashTimer / DASH_TIMER) * 64);
+            if (progress < 64) {
+                shapeRenderer.setColor(progress, 0, 0, 1);
+            } else {
+                shapeRenderer.setColor(0, 1, 0, 1);
+            }
+            shapeRenderer.rect((screenWidth * 0.5f) - 32, screenHeight - 32, progress, 8);
+            shapeRenderer.end();
+        }
 	}
 	
 	@Override
