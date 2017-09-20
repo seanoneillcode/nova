@@ -56,7 +56,7 @@ public class WizardGame extends ApplicationAdapter implements BulletController {
     private Vector2 dashMovement;
     private float dashTimer;
     private float hitboxTimer;
-    private static final float PLAYER_SPEED = 32.0f;
+    private static final float PLAYER_SPEED = 40.0f;
     private static final float BULLET_SPEED = 80f;
     private static final float SKELETON_SPEED = 32f;
     private static final float HITBOX_COOLDOWN = 0.25f;
@@ -289,9 +289,6 @@ public class WizardGame extends ApplicationAdapter implements BulletController {
         while (iter.hasNext()) {
             Bullet bullet = iter.next();
             bullet.update();
-            if (bullet.shouldRemove()) {
-                iter.remove();
-            }
             List<Entity> collidingEnemies = getCollidingEnemies(bullet.sprite.getBoundingRectangle());
             if (collidingEnemies.size() > 0) {
                 bullet.ttl = -1;
@@ -302,6 +299,9 @@ public class WizardGame extends ApplicationAdapter implements BulletController {
             if (playerRectangle.overlaps(bullet.sprite.getBoundingRectangle())) {
                 bullet.ttl = -1;
                 hurtPlayer();
+            }
+            if (bullet.shouldRemove()) {
+                iter.remove();
             }
         }
 
@@ -414,7 +414,7 @@ public class WizardGame extends ApplicationAdapter implements BulletController {
         if (slot.equals("block") && blockTimer < 0) {
             Vector2 offset = new Vector2();
             if (lastDirection.x < 0) {
-                offset = offset.add(-8,0);
+                offset = offset.add(-16,0);
                 blockSprite.setRotation(180);
             }
             if (lastDirection.x > 0) {
@@ -422,11 +422,11 @@ public class WizardGame extends ApplicationAdapter implements BulletController {
                 blockSprite.setRotation(0);
             }
             if (lastDirection.y < 0) {
-                offset = offset.add(6, 10);
+                offset = offset.add(0, 16);
                 blockSprite.setRotation(90);
             }
             if (lastDirection.y > 0) {
-                offset = offset.add(6, -10);
+                offset = offset.add(0, -16);
                 blockSprite.setRotation(270);
             }
             if (lastDirection.x < 0 && lastDirection.y > 0) {
@@ -440,7 +440,8 @@ public class WizardGame extends ApplicationAdapter implements BulletController {
             }
             if (lastDirection.x > 0 && lastDirection.y < 0) {
                 blockSprite.setRotation(45);
-            }            
+            }
+            offset.clamp(-16,16).add(6,0);
             createBlock(offset);
         }
         if (slot.equals("gun")) {
@@ -502,6 +503,7 @@ public class WizardGame extends ApplicationAdapter implements BulletController {
             if (lastDirection.x > 0 && lastDirection.y < 0) {
                 stabSprite.setRotation(45);
             }            
+            offset.clamp(-15,15);
             addHitbox(offset);
         }
         if (slot.equals("dash")) {
@@ -534,6 +536,7 @@ public class WizardGame extends ApplicationAdapter implements BulletController {
         shootCooldown = shootCooldown - Gdx.graphics.getDeltaTime();
         blockCooldown = blockCooldown - Gdx.graphics.getDeltaTime();
         boolean canChangeDir = hitboxTimer < 0;
+        Vector2 addSpeed = new Vector2();
         if (!canChangeDir) {
             actualSpeed = 0;
         }
@@ -547,7 +550,7 @@ public class WizardGame extends ApplicationAdapter implements BulletController {
                 lastDirection = inputVector.cpy();
                 currentWizard = wizard;
             }
-            playerPosition.add(-actualSpeed, 0);
+            addSpeed.add(-actualSpeed, 0);
         }
         if (isRightPressed) {
             if (canChangeDir) {
@@ -559,7 +562,7 @@ public class WizardGame extends ApplicationAdapter implements BulletController {
                 lastDirection = inputVector.cpy();
                 currentWizard = wizard;
             }
-            playerPosition.add(actualSpeed, 0);
+            addSpeed.add(actualSpeed, 0);
         }
         if (isUpPressed) {
             if (canChangeDir) {
@@ -567,7 +570,7 @@ public class WizardGame extends ApplicationAdapter implements BulletController {
                 lastDirection = inputVector.cpy();
                 currentWizard = upWizard;
             }
-            playerPosition.add(0, actualSpeed);
+            addSpeed.add(0, actualSpeed);
         }
         if (isDownPressed) {
             if (canChangeDir) {
@@ -575,8 +578,10 @@ public class WizardGame extends ApplicationAdapter implements BulletController {
                 lastDirection = inputVector.cpy();
                 currentWizard = downWizard;
             }
-            playerPosition.add(0, -actualSpeed);
+            addSpeed.add(0, -actualSpeed);
         }
+        addSpeed.clamp(-actualSpeed,actualSpeed);
+        playerPosition.add(addSpeed);
         if (Gdx.input.isKeyPressed(Input.Keys.S)) {
             useSlot(slotA); 
         }
