@@ -43,12 +43,16 @@ public class WizardGame extends ApplicationAdapter implements BulletController {
     private TextureRegion upWizard;
     private TextureRegion currentWizard;
     private Sprite stabSprite;
+    private Sprite blockSprite;
     private Texture skeleton;
     private Texture archer;
     private Texture bolt;
     private Vector2 playerPosition;
     private Vector2 hitboxOffset;
     private Vector2 hitboxPos;
+    private float blockTimer;
+    private Vector2 blockPos;
+    private Vector2 blockOffset;
     private Vector2 dashMovement;
     private float dashTimer;
     private float hitboxTimer;
@@ -61,6 +65,7 @@ public class WizardGame extends ApplicationAdapter implements BulletController {
     private static final float INITIAL_DASH = 2.4f;
     private static final float DASH_FRICTION = 0.92f;
     private static final float MAX_COOLDOWN = 0.2f;
+    private static final float MAX_BLOCK_COOLDOWN = 0.5f;
     private static final float HURT_COOL_DOWN = 1f;
     private static final float WAIT_START_COOLDOWN = 2.0f;
     private BitmapFont font;
@@ -77,6 +82,7 @@ public class WizardGame extends ApplicationAdapter implements BulletController {
     private List<Bullet> bullets;
     private List<Entity> enemies;
     private float shootCooldown;
+    private float blockCooldown;
 
     private int numberOfSkeletons;
     private int numberOfArchers;
@@ -93,8 +99,10 @@ public class WizardGame extends ApplicationAdapter implements BulletController {
 
     private Vector2 lastDirection;
 
-    String slotA = "dash";
+    String slotA = "block";
     String slotB = "stab";
+    // String slotA = "gun";
+    // String slotA = "block";
 
     Preferences prefs;
     int previousHighScore;
@@ -129,6 +137,8 @@ public class WizardGame extends ApplicationAdapter implements BulletController {
         downWizard = new TextureRegion(new Texture("wizard-down.png"));
         stabSprite = new Sprite(new Texture("stab.png"));
         stabSprite.setCenter(7,3);
+        blockSprite = new Sprite(new Texture("sheild.png"));
+        blockSprite.setCenter(2,8);
         currentWizard = wizard;
         bolt = new Texture("bolt.png");
         skeleton = new Texture("skeleton.png");
@@ -145,6 +155,8 @@ public class WizardGame extends ApplicationAdapter implements BulletController {
         bullets = new ArrayList<Bullet>();
         enemies = new ArrayList<Entity>();
         hitboxOffset = new Vector2();
+        blockPos = new Vector2();
+        blockOffset = new Vector2();
         inputVector = new Vector2();
         lastDirection = new Vector2(1,0);
         dashMovement = new Vector2();
@@ -163,7 +175,10 @@ public class WizardGame extends ApplicationAdapter implements BulletController {
         started = false;
         dashTimer = 
         hitboxTimer = -1.0f;
+        blockTimer = -1f;
         level = 0;
+        shootCooldown = -1;
+        blockCooldown = -1;
     }
 
     private Vector2 getRandomPosition() {
@@ -214,6 +229,9 @@ public class WizardGame extends ApplicationAdapter implements BulletController {
             }
             if (hitboxTimer >= HITBOX_COOLDOWN) {
                 stabSprite.draw(batch);               
+            }
+            if (blockTimer >= MAX_BLOCK_COOLDOWN * 0.5f) {
+                blockSprite.draw(batch);
             }
             font.draw(batch, "H " + wizardLife, 180, 180);
         } else {
@@ -274,8 +292,12 @@ public class WizardGame extends ApplicationAdapter implements BulletController {
             if (bullet.shouldRemove()) {
                 iter.remove();
             }
-            if (enemyCollision(bullet.sprite.getBoundingRectangle())) {
+            List<Entity> collidingEnemies = getCollidingEnemies(bullet.sprite.getBoundingRectangle());
+            if (collidingEnemies.size() > 0) {
                 bullet.ttl = -1;
+            }
+            for (Entity entity : collidingEnemies) {
+                entity.takeDamage(1);
             }
             if (playerRectangle.overlaps(bullet.sprite.getBoundingRectangle())) {
                 bullet.ttl = -1;
@@ -289,12 +311,24 @@ public class WizardGame extends ApplicationAdapter implements BulletController {
         hitboxPos = playerPosition.cpy().add(hitboxOffset);
         stabSprite.setPosition(hitboxPos.x, hitboxPos.y);
         if (hitboxTimer >= HITBOX_COOLDOWN) {
-            if (enemyCollision(stabSprite.getBoundingRectangle())) {
-                //hitboxTimer = -1;                
-            //    hitboxCooldown = HITBOX_COOLDOWN;
-            }            
+            List<Entity> collidingEnemies = getCollidingEnemies(stabSprite.getBoundingRectangle());
+            for (Entity entity : collidingEnemies) {
+                entity.takeDamage(1);
+            }
         }
 
+        if (blockTimer >= 0) {
+            blockTimer = blockTimer - delta; 
+        }
+        blockPos = playerPosition.cpy().add(blockOffset);
+        blockSprite.setPosition(blockPos.x, blockPos.y);
+        if (blockTimer >= (MAX_BLOCK_COOLDOWN * 0.5f)) {
+            // check collisions
+            List<Entity> collidingEnemies = getCollidingEnemies(blockSprite.getBoundingRectangle());
+            for (Entity entity : collidingEnemies) {
+                //entity.takeDamage(1);
+            }
+        }
 
 
         // dashMovement
@@ -313,9 +347,12 @@ public class WizardGame extends ApplicationAdapter implements BulletController {
             dashMovement.y = 0;
         }
 
-        
-        if (enemyCollision(playerRectangle)) {
+        List<Entity> collidingEnemies = getCollidingEnemies(playerRectangle);
+        if (collidingEnemies.size() > 0) {
             hurtPlayer();
+        }
+        for (Entity entity : collidingEnemies) {
+            entity.takeDamage(1);
         }
         hurtCooldown = hurtCooldown - delta;
 
@@ -346,15 +383,14 @@ public class WizardGame extends ApplicationAdapter implements BulletController {
         }
     }
 
-    private boolean enemyCollision(Rectangle rect) {
-        boolean isColliding = false;
+    private List<Entity> getCollidingEnemies(Rectangle rect) {
+        List<Entity> colliding = new ArrayList<Entity>();
         for (Entity e : enemies) {
             if(rect.overlaps(e.getBoundingRectangle())) {
-                e.takeDamage(1);
-                isColliding = true;
+                colliding.add(e);
             }
         }
-        return isColliding;
+        return colliding;
     }
 
     private void hurtPlayer() {
@@ -369,7 +405,44 @@ public class WizardGame extends ApplicationAdapter implements BulletController {
         }
     }
 
+    private void createBlock(Vector2 offset) {
+        blockTimer = MAX_BLOCK_COOLDOWN;
+        blockOffset = offset.cpy();
+    }
+
     private void useSlot(String slot) {
+        if (slot.equals("block") && blockTimer < 0) {
+            Vector2 offset = new Vector2();
+            if (lastDirection.x < 0) {
+                offset = offset.add(-8,0);
+                blockSprite.setRotation(180);
+            }
+            if (lastDirection.x > 0) {
+                offset = offset.add(16,0);
+                blockSprite.setRotation(0);
+            }
+            if (lastDirection.y < 0) {
+                offset = offset.add(6, 10);
+                blockSprite.setRotation(90);
+            }
+            if (lastDirection.y > 0) {
+                offset = offset.add(6, -10);
+                blockSprite.setRotation(270);
+            }
+            if (lastDirection.x < 0 && lastDirection.y > 0) {
+                blockSprite.setRotation(225);
+            }
+            if (lastDirection.x < 0 && lastDirection.y < 0) {
+                blockSprite.setRotation(135);
+            }
+            if (lastDirection.x > 0 && lastDirection.y > 0) {
+                blockSprite.setRotation(315);
+            }
+            if (lastDirection.x > 0 && lastDirection.y < 0) {
+                blockSprite.setRotation(45);
+            }            
+            createBlock(offset);
+        }
         if (slot.equals("gun")) {
             Vector2 offset = playerPosition.cpy();
             Vector2 dir = new Vector2();
@@ -459,6 +532,7 @@ public class WizardGame extends ApplicationAdapter implements BulletController {
         inputVector.y = 0;
 
         shootCooldown = shootCooldown - Gdx.graphics.getDeltaTime();
+        blockCooldown = blockCooldown - Gdx.graphics.getDeltaTime();
         boolean canChangeDir = hitboxTimer < 0;
         if (!canChangeDir) {
             actualSpeed = 0;
