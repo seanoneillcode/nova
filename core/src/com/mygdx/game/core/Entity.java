@@ -11,4 +11,5 @@ public interface Entity {
 	public void draw(SpriteBatch batch);
 	public void takeDamage(int damage);
 	public Rectangle getBoundingRectangle();
+	public void handleBlock();
 }

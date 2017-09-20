@@ -65,7 +65,7 @@ public class WizardGame extends ApplicationAdapter implements BulletController {
     private static final float INITIAL_DASH = 2.4f;
     private static final float DASH_FRICTION = 0.92f;
     private static final float MAX_COOLDOWN = 0.2f;
-    private static final float MAX_BLOCK_COOLDOWN = 0.5f;
+    private static final float MAX_BLOCK_COOLDOWN = 1.0f;
     private static final float HURT_COOL_DOWN = 1f;
     private static final float WAIT_START_COOLDOWN = 2.0f;
     private BitmapFont font;
@@ -289,19 +289,20 @@ public class WizardGame extends ApplicationAdapter implements BulletController {
         while (iter.hasNext()) {
             Bullet bullet = iter.next();
             bullet.update();
-            List<Entity> collidingEnemies = getCollidingEnemies(bullet.sprite.getBoundingRectangle());
-            if (collidingEnemies.size() > 0) {
-                bullet.ttl = -1;
-            }
-            for (Entity entity : collidingEnemies) {
-                entity.takeDamage(1);
-            }
-            if (playerRectangle.overlaps(bullet.sprite.getBoundingRectangle())) {
-                bullet.ttl = -1;
-                hurtPlayer();
-            }
             if (bullet.shouldRemove()) {
                 iter.remove();
+            } else {
+                List<Entity> collidingEnemies = getCollidingEnemies(bullet.sprite.getBoundingRectangle());
+                if (collidingEnemies.size() > 0) {
+                    bullet.ttl = -1;
+                }
+                for (Entity entity : collidingEnemies) {
+                    entity.takeDamage(1);
+                }
+                if (playerRectangle.overlaps(bullet.sprite.getBoundingRectangle())) {
+                    bullet.ttl = -1;
+                    hurtPlayer();
+                }    
             }
         }
 
@@ -326,7 +327,11 @@ public class WizardGame extends ApplicationAdapter implements BulletController {
             // check collisions
             List<Entity> collidingEnemies = getCollidingEnemies(blockSprite.getBoundingRectangle());
             for (Entity entity : collidingEnemies) {
-                //entity.takeDamage(1);
+                entity.handleBlock();
+            }
+            List<Bullet> collidingBullets = getCollidingBullets(blockSprite.getBoundingRectangle());
+            for (Bullet bullet : collidingBullets) {
+                bullet.ttl = -1;
             }
         }
 
@@ -392,6 +397,17 @@ public class WizardGame extends ApplicationAdapter implements BulletController {
         }
         return colliding;
     }
+
+    private List<Bullet> getCollidingBullets(Rectangle rect) {
+        List<Bullet> colliding = new ArrayList<Bullet>();
+        for (Bullet e : bullets) {
+            if(rect.overlaps(e.sprite.getBoundingRectangle())) {
+                colliding.add(e);
+            }
+        }
+        return colliding;
+    }
+
 
     private void hurtPlayer() {
         wizardLife = wizardLife - 1;
