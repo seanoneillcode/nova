@@ -82,6 +82,7 @@ public class WizardGame extends ApplicationAdapter implements BulletController {
     private int numberOfArchers;
     private int wizardLife = 100;
     private int enemiesKilled = 0;
+    private int level;
 
     Sound wizardDeathSound;
     Sound wizardShootSound;
@@ -105,7 +106,7 @@ public class WizardGame extends ApplicationAdapter implements BulletController {
 
     @Override
 	public void create () {
-        prefs = Gdx.app.getPreferences("WizardGamePreferences");
+        prefs = Gdx.app.getPreferences("NovaGamePreferences");
         previousHighScore = prefs.getInteger("highscore");
 
         enemyDeathSound = Gdx.audio.newSound(Gdx.files.internal("death-scream.wav"));
@@ -149,6 +150,21 @@ public class WizardGame extends ApplicationAdapter implements BulletController {
         dashMovement = new Vector2();
         resetGame();
 	}
+
+    private void resetGame() {
+        waitStart = WAIT_START_COOLDOWN;
+        wizardLife = 10;
+        playerPosition = new Vector2(128, 128);
+        enemies.clear();
+        bullets.clear();
+        enemiesKilled = 0;
+        numberOfSkeletons = 3;
+        numberOfArchers = 1;
+        started = false;
+        dashTimer = 
+        hitboxTimer = -1.0f;
+        level = 0;
+    }
 
     private Vector2 getRandomPosition() {
         float xpos = MathUtils.random(0, screenWidth);
@@ -199,8 +215,7 @@ public class WizardGame extends ApplicationAdapter implements BulletController {
             if (hitboxTimer >= HITBOX_COOLDOWN) {
                 stabSprite.draw(batch);               
             }
-            font.draw(batch, "HEALTH : " + wizardLife, 180, 180);
-            font.draw(batch, "DESTROYED : " + enemiesKilled, 4, 180);
+            font.draw(batch, "H " + wizardLife, 180, 180);
         } else {
             font.draw(batch, "YOU RAN OUT OF Health", 80, 158);
             font.draw(batch, "YOU DESTROYED  " + enemiesKilled + "  ENEMIES", 70, 128);
@@ -317,8 +332,11 @@ public class WizardGame extends ApplicationAdapter implements BulletController {
             }
         }
         if (enemies.size() < 1 && started) {
-            numberOfSkeletons++;
-            numberOfArchers = numberOfSkeletons / 3;
+            level++;
+            if (level % 2 == 0) {
+                numberOfSkeletons++;
+                numberOfArchers = numberOfSkeletons / 3;
+            }
             addWaveOfSkeletons();
         }
         waitStart = waitStart - delta;
@@ -350,22 +368,6 @@ public class WizardGame extends ApplicationAdapter implements BulletController {
             }
         }
     }
-
-
-    private void resetGame() {
-        waitStart = WAIT_START_COOLDOWN;
-        wizardLife = 100;
-        playerPosition = new Vector2(128, 128);
-        enemies.clear();
-        bullets.clear();
-        enemiesKilled = 0;
-        numberOfSkeletons = 3;
-        numberOfArchers = 1;
-        started = false;
-        dashTimer = 
-        hitboxTimer = -1.0f;
-    }
-
 
     private void useSlot(String slot) {
         if (slot.equals("gun")) {
@@ -526,7 +528,20 @@ public class WizardGame extends ApplicationAdapter implements BulletController {
 
     private void addShootingEnemy() {
         Vector2 pos = null;
-        pos = new Vector2(MathUtils.random( 0, 240), MathUtils.random(0, 180));
+        switch (MathUtils.random(3)) {
+            case 0:
+                pos = new Vector2(MathUtils.random(0, 256), 0);
+                break;
+            case 1:
+                pos = new Vector2(MathUtils.random(0, 256), 180);
+                break;
+            case 2:
+                pos = new Vector2(0, MathUtils.random(0, 256));
+                break;
+            case 3:
+                pos = new Vector2(256, MathUtils.random(0, 180));
+                break;
+        }
         Archer e = new Archer(archer, pos, 1, SKELETON_SPEED);
         enemies.add(e);
     }

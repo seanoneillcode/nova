@@ -27,9 +27,9 @@ public class Archer extends Enemy {
         float delta = Gdx.graphics.getDeltaTime();
 
         if (shootCooldown < 0) {
-            Vector2 pos = new Vector2(sprite.getX() + 6, sprite.getY() + 6);
+            Vector2 pos = new Vector2(sprite.getX() + 4, sprite.getY() + 4);
             Vector2 dir = new Vector2(player.x - sprite.getX(), player.y - sprite.getY()).nor();
-            Vector2 offset = dir.cpy().scl(16);
+            Vector2 offset = dir.cpy().scl(20);
             bulletController.createBullet(dir.scl(64), pos.add(offset).add(goalDirection));
             shootCooldown = SHOOT_COOLDOWN;
             pickNewLocation(player);
