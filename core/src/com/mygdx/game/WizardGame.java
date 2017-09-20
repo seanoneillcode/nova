@@ -78,7 +78,8 @@ public class WizardGame extends ApplicationAdapter implements BulletController {
     private List<Entity> enemies;
     private float shootCooldown;
 
-    private int numberOfSkeletons = 4;
+    private int numberOfSkeletons;
+    private int numberOfArchers;
     private int wizardLife = 100;
     private int enemiesKilled = 0;
 
@@ -175,32 +176,6 @@ public class WizardGame extends ApplicationAdapter implements BulletController {
         bullets.add(b);
     }
 
-    private void addShootingEnemy() {
-        Vector2 pos = null;
-        pos = new Vector2(MathUtils.random( 32, 128), MathUtils.random(32, 168));
-        Archer e = new Archer(archer, pos, 1, SKELETON_SPEED);
-        enemies.add(e);
-    }
-
-    private void addSkeleton() {
-        Vector2 pos = null;
-        switch (MathUtils.random(3)) {
-            case 0:
-                pos = new Vector2(MathUtils.random(0, 256), 0);
-                break;
-            case 1:
-                pos = new Vector2(MathUtils.random(0, 256), 256);
-                break;
-            case 2:
-                pos = new Vector2(0, MathUtils.random(0, 256));
-                break;
-            case 3:
-                pos = new Vector2(256, MathUtils.random(0, 256));
-                break;
-        }
-        Enemy e = new Enemy(skeleton, pos, 1, SKELETON_SPEED);
-        enemies.add(e);
-    }
 
 	@Override
 	public void render () {
@@ -224,7 +199,7 @@ public class WizardGame extends ApplicationAdapter implements BulletController {
             if (hitboxTimer >= HITBOX_COOLDOWN) {
                 stabSprite.draw(batch);               
             }
-            font.draw(batch, "HEALTH : " + wizardLife, 200, 180);
+            font.draw(batch, "HEALTH : " + wizardLife, 180, 180);
             font.draw(batch, "DESTROYED : " + enemiesKilled, 4, 180);
         } else {
             font.draw(batch, "YOU RAN OUT OF Health", 80, 158);
@@ -343,6 +318,7 @@ public class WizardGame extends ApplicationAdapter implements BulletController {
         }
         if (enemies.size() < 1 && started) {
             numberOfSkeletons++;
+            numberOfArchers = numberOfSkeletons / 3;
             addWaveOfSkeletons();
         }
         waitStart = waitStart - delta;
@@ -383,18 +359,13 @@ public class WizardGame extends ApplicationAdapter implements BulletController {
         enemies.clear();
         bullets.clear();
         enemiesKilled = 0;
-        numberOfSkeletons = 4;
+        numberOfSkeletons = 3;
+        numberOfArchers = 1;
         started = false;
         dashTimer = 
         hitboxTimer = -1.0f;
     }
 
-    private void addWaveOfSkeletons() {
-        for (int i = 0; i < numberOfSkeletons; i++) {
-            addSkeleton();
-        }
-        addShootingEnemy();
-    }
 
     private void useSlot(String slot) {
         if (slot.equals("gun")) {
@@ -543,5 +514,41 @@ public class WizardGame extends ApplicationAdapter implements BulletController {
             resetGame();
         }
 	}
+
+    private void addWaveOfSkeletons() {
+        for (int i = 0; i < numberOfSkeletons; i++) {
+            addSkeleton();
+        }
+        for (int i = 0; i < numberOfArchers; i++) {
+            addShootingEnemy();
+        }
+    }
+
+    private void addShootingEnemy() {
+        Vector2 pos = null;
+        pos = new Vector2(MathUtils.random( 0, 240), MathUtils.random(0, 180));
+        Archer e = new Archer(archer, pos, 1, SKELETON_SPEED);
+        enemies.add(e);
+    }
+
+    private void addSkeleton() {
+        Vector2 pos = null;
+        switch (MathUtils.random(3)) {
+            case 0:
+                pos = new Vector2(MathUtils.random(0, 256), 0);
+                break;
+            case 1:
+                pos = new Vector2(MathUtils.random(0, 256), 256);
+                break;
+            case 2:
+                pos = new Vector2(0, MathUtils.random(0, 256));
+                break;
+            case 3:
+                pos = new Vector2(256, MathUtils.random(0, 256));
+                break;
+        }
+        Enemy e = new Enemy(skeleton, pos, 1, SKELETON_SPEED);
+        enemies.add(e);
+    }
 
 }
