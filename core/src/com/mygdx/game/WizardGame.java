@@ -50,6 +50,7 @@ public class WizardGame extends ApplicationAdapter implements BulletController {
     private Vector2 playerPosition;
     private Vector2 hitboxOffset;
     private Vector2 hitboxPos;
+    private Vector2 addSpeed;
     private float blockTimer;
     private Vector2 blockPos;
     private Vector2 blockOffset;
@@ -100,7 +101,7 @@ public class WizardGame extends ApplicationAdapter implements BulletController {
     private Vector2 lastDirection;
 
     String slotA = "block";
-    String slotB = "stab";
+    String slotB = "dash";
     // String slotA = "gun";
     // String slotA = "block";
 
@@ -271,6 +272,12 @@ public class WizardGame extends ApplicationAdapter implements BulletController {
     private void update() {
         float delta = Gdx.graphics.getDeltaTime();
         time = time - delta;
+
+        addSpeed.add(dashMovement.x, dashMovement.y);
+        dashMovement.x = dashMovement.x * DASH_FRICTION;
+        dashMovement.y = dashMovement.y * DASH_FRICTION;
+        playerPosition.add(addSpeed);
+
         if (playerPosition.x < 0) {
             playerPosition.x = 0;
         }
@@ -306,6 +313,7 @@ public class WizardGame extends ApplicationAdapter implements BulletController {
             }
         }
 
+
         if (hitboxTimer >= 0) {
             hitboxTimer = hitboxTimer - delta;
         }
@@ -327,7 +335,7 @@ public class WizardGame extends ApplicationAdapter implements BulletController {
             // check collisions
             List<Entity> collidingEnemies = getCollidingEnemies(blockSprite.getBoundingRectangle());
             for (Entity entity : collidingEnemies) {
-                entity.handleBlock();
+                entity.handleBlock(addSpeed);
             }
             List<Bullet> collidingBullets = getCollidingBullets(blockSprite.getBoundingRectangle());
             for (Bullet bullet : collidingBullets) {
@@ -337,9 +345,6 @@ public class WizardGame extends ApplicationAdapter implements BulletController {
 
 
         // dashMovement
-        playerPosition.add(dashMovement.x, dashMovement.y);
-        dashMovement.x = dashMovement.x * DASH_FRICTION;
-        dashMovement.y = dashMovement.y * DASH_FRICTION;
 
         if (dashTimer >= 0) {
             dashTimer = dashTimer - delta;            
@@ -552,7 +557,7 @@ public class WizardGame extends ApplicationAdapter implements BulletController {
         shootCooldown = shootCooldown - Gdx.graphics.getDeltaTime();
         blockCooldown = blockCooldown - Gdx.graphics.getDeltaTime();
         boolean canChangeDir = hitboxTimer < 0;
-        Vector2 addSpeed = new Vector2();
+        addSpeed = new Vector2();
         if (!canChangeDir) {
             actualSpeed = 0;
         }
@@ -597,7 +602,6 @@ public class WizardGame extends ApplicationAdapter implements BulletController {
             addSpeed.add(0, -actualSpeed);
         }
         addSpeed.clamp(-actualSpeed,actualSpeed);
-        playerPosition.add(addSpeed);
         if (Gdx.input.isKeyPressed(Input.Keys.S)) {
             useSlot(slotA); 
         }

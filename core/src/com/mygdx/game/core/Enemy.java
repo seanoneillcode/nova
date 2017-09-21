@@ -48,9 +48,9 @@ public class Enemy implements Entity {
         return sprite.getBoundingRectangle();
     }
 
-    public void handleBlock() {
-        float newX = sprite.getX() - mov.x - mov.x;
-        float newY = sprite.getY() - mov.y - mov.y;
+    public void handleBlock(Vector2 push) {
+        float newX = sprite.getX() - mov.x - mov.x + push.x;
+        float newY = sprite.getY() - mov.y - mov.y + push.y;
         sprite.setPosition(newX, newY);
     }
 }
