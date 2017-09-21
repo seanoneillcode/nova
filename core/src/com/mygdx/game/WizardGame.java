@@ -65,7 +65,7 @@ public class WizardGame extends ApplicationAdapter implements BulletController {
     private static final float DASH_TIMER = 2.0f;
     private static final float INITIAL_DASH = 2.4f;
     private static final float DASH_FRICTION = 0.92f;
-    private static final float MAX_COOLDOWN = 0.2f;
+    private static final float MAX_SHOOT_COOLDOWN = 0.8f;
     private static final float MAX_BLOCK_COOLDOWN = 1.0f;
     private static final float HURT_COOL_DOWN = 1f;
     private static final float WAIT_START_COOLDOWN = 2.0f;
@@ -100,8 +100,9 @@ public class WizardGame extends ApplicationAdapter implements BulletController {
 
     private Vector2 lastDirection;
 
-    String slotA = "block";
-    String slotB = "dash";
+    // gun block dash stab
+    String slotA = "dash";
+    String slotB = "gun";
     // String slotA = "gun";
     // String slotA = "block";
 
@@ -249,17 +250,32 @@ public class WizardGame extends ApplicationAdapter implements BulletController {
 		batch.end();
 
         if (wizardLife > 0) {
+            shapeRenderer.begin(ShapeType.Filled);
             if (slotA.equals("dash") || slotB.equals("dash")) {
-                shapeRenderer.begin(ShapeType.Filled);
                 float progress = 64 - ((dashTimer / DASH_TIMER) * 64);
                 if (progress < 64) {
                     shapeRenderer.setColor(progress / 72, 0, 0, 1);
                 } else {
+                    if (progress > 64) {
+                        progress = 64;
+                    }
                     shapeRenderer.setColor(0.8f, 0.8f, 0, 1);
                 }
                 shapeRenderer.rect((screenWidth * 0.5f) - 32, screenHeight - 32, progress, 8);
-                shapeRenderer.end();
             }            
+            if (slotA.equals("gun") || slotB.equals("gun")) {
+                float progress = 64 - ((shootCooldown / MAX_SHOOT_COOLDOWN) * 64);
+                if (progress < 64) {
+                    shapeRenderer.setColor(progress / 72, 0, 0, 1);
+                } else {
+                    if (progress > 64) {
+                        progress = 64;
+                    }
+                    shapeRenderer.setColor(0, 0.8f, 0.8f, 1);
+                }
+                shapeRenderer.rect((screenWidth * 0.2f) - 32, screenHeight - 32, progress, 8);
+            }
+            shapeRenderer.end();
         }
 	}
 	
@@ -487,7 +503,7 @@ public class WizardGame extends ApplicationAdapter implements BulletController {
             }    
             if (offset != null && dir != null) {
                 if (shootCooldown < 0) {
-                    shootCooldown = MAX_COOLDOWN;
+                    shootCooldown = MAX_SHOOT_COOLDOWN;
                     createBullet(dir, offset);
                     playSound(wizardShootSound);
                 }
