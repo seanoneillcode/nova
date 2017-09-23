@@ -715,7 +715,7 @@ public class WizardGame extends ApplicationAdapter implements BulletController {
             resetGame();
         }
         
-        if (Gdx.input.isKeyPressed(Input.Keys.R)) {
+        if (Gdx.input.isKeyPressed(Input.Keys.ENTER)) {
             if (!showMenuLock) {
                 showMenuLock = true;
                 isMenuShown = !isMenuShown;
