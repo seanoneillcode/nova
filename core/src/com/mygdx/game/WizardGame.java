@@ -26,13 +26,13 @@ import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Interpolation;
 import com.mygdx.game.core.Bullet;
-import com.mygdx.game.core.BulletController;
 import com.mygdx.game.core.Enemy;
 import com.mygdx.game.core.Entity;
 import com.mygdx.game.core.Archer;
+import com.mygdx.game.core.Wizard;
 
 
-public class WizardGame extends ApplicationAdapter implements BulletController {
+public class WizardGame extends ApplicationAdapter {
 
     private static final int WORLD_WIDTH = 256;
     private static final int WORLD_HEIGHT = 256;
@@ -50,6 +50,7 @@ public class WizardGame extends ApplicationAdapter implements BulletController {
     private Sprite blockSprite;
     private Texture skeleton;
     private Texture archer;
+    private Texture badWizard;
     private Texture bolt;
     private Vector2 playerPosition;
     private Vector2 hitboxOffset;
@@ -62,8 +63,10 @@ public class WizardGame extends ApplicationAdapter implements BulletController {
     private float dashTimer;
     private float hitboxTimer;
     private static final float PLAYER_SPEED = 40.0f;
-    private static final float BULLET_SPEED = 80f;
-    private static final float SKELETON_SPEED = 32f;
+    private static final float BULLET_SPEED = 60f;
+    private static final float SKELETON_SPEED = 16f;
+    private static final float ARCHER_SPEED = 32f;
+    private static final float WIZARD_SPEED = 32f;
     private static final float HITBOX_COOLDOWN = 0.15f;
     private static final float HITBOX_TIMER = 0.3f;
     private static final float DASH_TIMER = 2.0f;
@@ -90,6 +93,7 @@ public class WizardGame extends ApplicationAdapter implements BulletController {
     private float blockCooldown;
 
     private int numberOfSkeletons;
+    private int numberOfWizards;
     private int numberOfArchers;
     private int wizardLife = 100;
     private int enemiesKilled = 0;
@@ -156,6 +160,7 @@ public class WizardGame extends ApplicationAdapter implements BulletController {
         bolt = new Texture("bolt.png");
         skeleton = new Texture("skeleton.png");
         archer = new Texture("archer.png");
+        badWizard = new Texture("wizard.png");
         playerPosition = getRandomPosition();
 
         abilityMenu = new TextureRegion(new Texture("ability-select.png"));
@@ -196,6 +201,7 @@ public class WizardGame extends ApplicationAdapter implements BulletController {
         enemiesKilled = 0;
         numberOfSkeletons = 3;
         numberOfArchers = 1;
+        numberOfWizards = 0;
         started = false;
         dashTimer = 
         hitboxTimer = -1.0f;
@@ -226,8 +232,8 @@ public class WizardGame extends ApplicationAdapter implements BulletController {
         }
     }
 
-    public void createBullet(Vector2 direction, Vector2 position) {
-        Bullet b = new Bullet(bolt, direction, position);
+    public void createBullet(Vector2 direction, Vector2 position, String owner) {
+        Bullet b = new Bullet(bolt, direction, position, owner);
         bullets.add(b);
     }
 
@@ -360,14 +366,14 @@ public class WizardGame extends ApplicationAdapter implements BulletController {
             if (bullet.shouldRemove()) {
                 iter.remove();
             } else {
-                List<Entity> collidingEnemies = getCollidingEnemies(bullet.sprite.getBoundingRectangle());
+                List<Entity> collidingEnemies = getCollidingEnemies(bullet.sprite.getBoundingRectangle(), bullet.getOwner());
                 if (collidingEnemies.size() > 0) {
                     bullet.ttl = -1;
                 }
                 for (Entity entity : collidingEnemies) {
                     entity.takeDamage(1);
                 }
-                if (playerRectangle.overlaps(bullet.sprite.getBoundingRectangle())) {
+                if (playerRectangle.overlaps(bullet.sprite.getBoundingRectangle()) && !bullet.isOwner("player1")) {
                     bullet.ttl = -1;
                     hurtPlayer();
                 }    
@@ -381,7 +387,7 @@ public class WizardGame extends ApplicationAdapter implements BulletController {
         hitboxPos = playerPosition.cpy().add(hitboxOffset);
         stabSprite.setPosition(hitboxPos.x, hitboxPos.y);
         if (hitboxTimer >= HITBOX_COOLDOWN) {
-            List<Entity> collidingEnemies = getCollidingEnemies(stabSprite.getBoundingRectangle());
+            List<Entity> collidingEnemies = getCollidingEnemies(stabSprite.getBoundingRectangle(), "player1");
             for (Entity entity : collidingEnemies) {
                 entity.takeDamage(1);
             }
@@ -394,11 +400,11 @@ public class WizardGame extends ApplicationAdapter implements BulletController {
         blockSprite.setPosition(blockPos.x, blockPos.y);
         if (blockTimer >= (MAX_BLOCK_COOLDOWN * 0.5f)) {
             // check collisions
-            List<Entity> collidingEnemies = getCollidingEnemies(blockSprite.getBoundingRectangle());
+            List<Entity> collidingEnemies = getCollidingEnemies(blockSprite.getBoundingRectangle(), "player1");
             for (Entity entity : collidingEnemies) {
                 entity.handleBlock(addSpeed);
             }
-            List<Bullet> collidingBullets = getCollidingBullets(blockSprite.getBoundingRectangle());
+            List<Bullet> collidingBullets = getCollidingBullets(blockSprite.getBoundingRectangle(), "player1");
             for (Bullet bullet : collidingBullets) {
                 bullet.ttl = -1;
             }
@@ -418,7 +424,7 @@ public class WizardGame extends ApplicationAdapter implements BulletController {
             dashMovement.y = 0;
         }
 
-        List<Entity> collidingEnemies = getCollidingEnemies(playerRectangle);
+        List<Entity> collidingEnemies = getCollidingEnemies(playerRectangle, "player1");
         if (collidingEnemies.size() > 0) {
             hurtPlayer();
         }
@@ -430,7 +436,7 @@ public class WizardGame extends ApplicationAdapter implements BulletController {
         Iterator<Entity> iter2 = enemies.listIterator();
         while (iter2.hasNext()) {
             Entity entity = iter2.next();
-            entity.update(playerPosition, this);
+            entity.update(playerPosition);
             if (entity.shouldRemove()) {
                 iter2.remove();
                 enemiesKilled = enemiesKilled + 1;
@@ -443,7 +449,12 @@ public class WizardGame extends ApplicationAdapter implements BulletController {
             level++;
             if (level % 2 == 0) {
                 numberOfSkeletons++;
-                numberOfArchers = numberOfSkeletons / 3;
+            }
+            if (level % 6 == 0) {
+                numberOfArchers++;
+            }
+            if (level % 8 == 0) {
+                numberOfWizards++;
             }
             addWaveOfSkeletons();
         }
@@ -454,20 +465,20 @@ public class WizardGame extends ApplicationAdapter implements BulletController {
         }
     }
 
-    private List<Entity> getCollidingEnemies(Rectangle rect) {
+    private List<Entity> getCollidingEnemies(Rectangle rect, String owner) {
         List<Entity> colliding = new ArrayList<Entity>();
         for (Entity e : enemies) {
-            if(rect.overlaps(e.getBoundingRectangle())) {
+            if(!e.isOwner(owner) && rect.overlaps(e.getBoundingRectangle())) {
                 colliding.add(e);
             }
         }
         return colliding;
     }
 
-    private List<Bullet> getCollidingBullets(Rectangle rect) {
+    private List<Bullet> getCollidingBullets(Rectangle rect, String owner) {
         List<Bullet> colliding = new ArrayList<Bullet>();
         for (Bullet e : bullets) {
-            if(rect.overlaps(e.sprite.getBoundingRectangle())) {
+            if(!e.isOwner(owner) && rect.overlaps(e.sprite.getBoundingRectangle())) {
                 colliding.add(e);
             }
         }
@@ -549,7 +560,7 @@ public class WizardGame extends ApplicationAdapter implements BulletController {
             if (offset != null && dir != null) {
                 if (shootCooldown < 0) {
                     shootCooldown = MAX_SHOOT_COOLDOWN;
-                    createBullet(dir, offset);
+                    createBullet(dir, offset, "player1");
                     playSound(wizardShootSound);
                 }
             }
@@ -732,29 +743,27 @@ public class WizardGame extends ApplicationAdapter implements BulletController {
         for (int i = 0; i < numberOfArchers; i++) {
             addShootingEnemy();
         }
+        for (int i = 0; i < numberOfWizards; i++) {
+            addWizardEnemy();
+        }
     }
 
     private void addShootingEnemy() {
-        Vector2 pos = null;
-        switch (MathUtils.random(3)) {
-            case 0:
-                pos = new Vector2(MathUtils.random(0, 256), 0);
-                break;
-            case 1:
-                pos = new Vector2(MathUtils.random(0, 256), 180);
-                break;
-            case 2:
-                pos = new Vector2(0, MathUtils.random(0, 256));
-                break;
-            case 3:
-                pos = new Vector2(256, MathUtils.random(0, 180));
-                break;
-        }
-        Archer e = new Archer(archer, pos, 1, SKELETON_SPEED);
+        Archer e = new Archer(archer, getRandomEdge(), 1, ARCHER_SPEED, "enemy", this);
+        enemies.add(e);
+    }
+
+    private void addWizardEnemy() {
+        Wizard e = new Wizard(badWizard, getRandomEdge(), 1, WIZARD_SPEED, "enemy", this);
         enemies.add(e);
     }
 
     private void addSkeleton() {
+        Enemy e = new Enemy(skeleton, getRandomEdge(), 1, SKELETON_SPEED, "enemy");
+        enemies.add(e);
+    }
+
+    private Vector2 getRandomEdge() {
         Vector2 pos = null;
         switch (MathUtils.random(3)) {
             case 0:
@@ -770,8 +779,7 @@ public class WizardGame extends ApplicationAdapter implements BulletController {
                 pos = new Vector2(256, MathUtils.random(0, 256));
                 break;
         }
-        Enemy e = new Enemy(skeleton, pos, 1, SKELETON_SPEED);
-        enemies.add(e);
+        return pos;
     }
 
 }

@@ -11,14 +11,15 @@ import com.mygdx.game.core.Enemy;
 import com.badlogic.gdx.math.MathUtils;
 import com.mygdx.game.WizardGame;
 
-public class Archer extends Enemy {
+
+public class Wizard extends Enemy {
 
     private static final float SHOOT_COOLDOWN = 2.0f;
     private float shootCooldown;
     private Vector2 goalDirection;
     private WizardGame wizardGame;
 
-    public Archer(Texture texture, Vector2 pos, int health, float speed, String owner, WizardGame wizardGame) {
+    public Wizard(Texture texture, Vector2 pos, int health, float speed, String owner, WizardGame wizardGame) {
         super(texture,pos,health,speed, owner);
         shootCooldown = 0.4f;
         pickNewLocation(pos);
@@ -34,10 +35,10 @@ public class Archer extends Enemy {
             Vector2 offset = dir.cpy().scl(20);
             wizardGame.createBullet(dir.scl(64), pos.add(offset).add(goalDirection), "enemy");
             shootCooldown = SHOOT_COOLDOWN;
-            pickNewLocation(player);
         } else {
             shootCooldown = shootCooldown - delta;
         }
+        pickNewLocation(player);
         if (shootCooldown < (SHOOT_COOLDOWN * 0.6f)) {
             float newX = sprite.getX() + (delta * goalDirection.x * speed);
             float newY = sprite.getY() + (delta * goalDirection.y * speed);
@@ -53,10 +54,11 @@ public class Archer extends Enemy {
         // Vector2 pos = new Vector2(MathUtils.random(16, 224), MathUtils.random(16, 224));
         float distance = player.dst2(new Vector2(sprite.getX(),sprite.getY()));
         if (distance < 4800) {
-            Vector2 dir = new Vector2(player.x - sprite.getX(), player.y - sprite.getY()).nor();
-            dir.x = dir.x * -1;
-            dir.y = dir.y * -1;
-            goalDirection = dir.cpy();
+            float xpos = MathUtils.random(0, 256);
+            float ypos = MathUtils.random(0, 180);
+            Vector2 pos = new Vector2(xpos,ypos);
+            goalDirection = pos.cpy();
+            sprite.setPosition(goalDirection.x, goalDirection.y);
         } else {
             if (distance > 17000) {
                 Vector2 dir = new Vector2(player.x - sprite.getX(), player.y - sprite.getY()).nor();

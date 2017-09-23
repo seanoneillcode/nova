@@ -7,27 +7,29 @@ import com.badlogic.gdx.math.Vector2;
 import com.mygdx.game.core.Entity;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Rectangle;
-import com.mygdx.game.core.BulletController;
+import com.mygdx.game.core.Pwned;
 
-public class Enemy implements Entity {
+public class Enemy implements Entity, Pwned {
     public Sprite sprite;
     public int health;
     public float speed;
+    private String owner;
     private Vector2 mov;
 
-    public Enemy(Texture texture, Vector2 pos, int health, float speed) {
+    public Enemy(Texture texture, Vector2 pos, int health, float speed, String owner) {
         this.sprite = new Sprite(texture);
         sprite.setPosition(pos.x, pos.y);
         this.health = health;
         this.speed = speed;
         mov = new Vector2();
+        this.owner = owner;
     }
 
     public boolean shouldRemove() {
         return health < 1;
     }
 
-    public void update(Vector2 player, BulletController bulletController) {
+    public void update(Vector2 player) {
         Vector2 dir = new Vector2(player.x - sprite.getX(), player.y - sprite.getY()).nor();
         float delta = Gdx.graphics.getDeltaTime();
         mov = new Vector2((delta * dir.x * speed), (delta * dir.y * speed));
@@ -52,5 +54,12 @@ public class Enemy implements Entity {
         float newX = sprite.getX() - mov.x - mov.x + push.x;
         float newY = sprite.getY() - mov.y - mov.y + push.y;
         sprite.setPosition(newX, newY);
+    }
+
+    public String getOwner() {
+        return owner;
+    }
+    public boolean isOwner(String other) {
+        return this.owner.equals(other);
     }
 }
