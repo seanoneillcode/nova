@@ -42,6 +42,10 @@ public class WizardGame extends ApplicationAdapter implements BulletController {
     private TextureRegion downWizard;
     private TextureRegion upWizard;
     private TextureRegion currentWizard;
+    private TextureRegion abilityMenu;
+    private TextureRegion slotASelect;
+    private TextureRegion slotBSelect;
+    private TextureRegion selectionPointer;
     private Sprite stabSprite;
     private Sprite blockSprite;
     private Texture skeleton;
@@ -105,6 +109,7 @@ public class WizardGame extends ApplicationAdapter implements BulletController {
     String slotB = "gun";
     // String slotA = "gun";
     // String slotA = "block";
+    private boolean pointerLock = false;
 
     Preferences prefs;
     int previousHighScore;
@@ -113,6 +118,12 @@ public class WizardGame extends ApplicationAdapter implements BulletController {
     float waitStart = 0;
     private boolean started;
     private boolean soundEffectsOn = false;
+    private boolean isMenuShown = false;
+    private boolean showMenuLock = false;
+    private Vector2 pointerPos;
+    private String currentSlotSelection = "slotA";
+    private int abilityIndex = 0;
+    private List<String> abilities;
 
     @Override
 	public void create () {
@@ -146,6 +157,17 @@ public class WizardGame extends ApplicationAdapter implements BulletController {
         skeleton = new Texture("skeleton.png");
         archer = new Texture("archer.png");
         playerPosition = getRandomPosition();
+
+        abilityMenu = new TextureRegion(new Texture("ability-select.png"));
+        slotASelect = new TextureRegion(new Texture("slota-select.png"));
+        slotBSelect = new TextureRegion(new Texture("slotb-select.png"));
+        selectionPointer = new TextureRegion(new Texture("selection-pointer.png"));
+        pointerPos = new Vector2();
+        abilities = new ArrayList<String>();
+        abilities.add("stab");
+        abilities.add("block");
+        abilities.add("dash");
+        abilities.add("gun");
 
         FileHandle handle = Gdx.files.internal("MavenPro-regular.ttf");
         FreeTypeFontGenerator generator = new FreeTypeFontGenerator(handle);
@@ -214,42 +236,56 @@ public class WizardGame extends ApplicationAdapter implements BulletController {
 	public void render () {
         camera.update();
         batch.setProjectionMatrix(camera.combined);
-        // shapeRenderer.setProjectionMatrix(camera.combined);
         handleInput();
 
 		Gdx.gl.glClearColor(0, 0, 0, 1);
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 		batch.begin();
-        if (wizardLife > 0) {
-            update();
-            batch.draw(currentWizard, playerPosition.x, playerPosition.y);
-            for (Bullet b : bullets) {
-                b.sprite.draw(batch);
-            }
-            for (Entity e : enemies) {
-                e.draw(batch);
-            }
-            if (hitboxTimer >= HITBOX_COOLDOWN) {
-                stabSprite.draw(batch);               
-            }
-            if (blockTimer >= MAX_BLOCK_COOLDOWN * 0.5f) {
-                blockSprite.draw(batch);
-            }
-            font.draw(batch, "H " + wizardLife, 180, 180);
+        if (isMenuShown) {
+            updateMenu();
+            // draw menu
+            batch.draw(abilityMenu, 10, 60);
+            // draw slota
+            batch.draw(slotASelect, 70 + (abilities.indexOf(slotA) * 44), 104);            
+            // draw slotb
+            batch.draw(slotBSelect, 70 + (abilities.indexOf(slotB) * 44), 74);
+            // draw pointer
+            batch.draw(selectionPointer, pointerPos.x, pointerPos.y);
         } else {
-            font.draw(batch, "YOU RAN OUT OF Health", 80, 158);
-            font.draw(batch, "YOU DESTROYED  " + enemiesKilled + "  ENEMIES", 70, 128);
-            font.draw(batch, "PRESS SPACE TO PLAY AGAIN", 70, 68);
-            if (enemiesKilled == previousHighScore) {
-                font.draw(batch, "NEW HIGH SCORE!", 70, 98);
+            if (wizardLife > 0) {
+                update();
+                batch.draw(currentWizard, playerPosition.x, playerPosition.y);
+                for (Bullet b : bullets) {
+                    b.sprite.draw(batch);
+                }
+                for (Entity e : enemies) {
+                    e.draw(batch);
+                }
+                if (hitboxTimer >= HITBOX_COOLDOWN) {
+                    stabSprite.draw(batch);               
+                }
+                if (blockTimer >= MAX_BLOCK_COOLDOWN * 0.5f) {
+                    blockSprite.draw(batch);
+                }
+                font.draw(batch, "H " + wizardLife, 200, 180);
+                font.draw(batch, slotA, 12, 178);
+                font.draw(batch, slotB, 60, 178);
             } else {
-                font.draw(batch, "CURRENT HIGH SCORE is " + this.previousHighScore, 70, 98);
+                font.draw(batch, "YOU RAN OUT OF Health", 80, 158);
+                font.draw(batch, "YOU DESTROYED  " + enemiesKilled + "  ENEMIES", 70, 128);
+                font.draw(batch, "PRESS SPACE TO PLAY AGAIN", 70, 68);
+                if (enemiesKilled == previousHighScore) {
+                    font.draw(batch, "NEW HIGH SCORE!", 70, 98);
+                } else {
+                    font.draw(batch, "CURRENT HIGH SCORE is " + this.previousHighScore, 70, 98);
+                }
             }
         }
 
 		batch.end();
-
-        if (wizardLife > 0) {
+        // shapeRenderer.setProjectionMatrix(camera.combined);
+        
+        if (wizardLife > 0 && !isMenuShown) {
             shapeRenderer.begin(ShapeType.Filled);
             if (slotA.equals("dash") || slotB.equals("dash")) {
                 float progress = 64 - ((dashTimer / DASH_TIMER) * 64);
@@ -261,8 +297,8 @@ public class WizardGame extends ApplicationAdapter implements BulletController {
                     }
                     shapeRenderer.setColor(0.8f, 0.8f, 0, 1);
                 }
-                shapeRenderer.rect((screenWidth * 0.5f) - 32, screenHeight - 32, progress, 8);
-            }            
+                shapeRenderer.rect(24, screenHeight - 32, progress, 8);
+            }
             if (slotA.equals("gun") || slotB.equals("gun")) {
                 float progress = 64 - ((shootCooldown / MAX_SHOOT_COOLDOWN) * 64);
                 if (progress < 64) {
@@ -273,7 +309,7 @@ public class WizardGame extends ApplicationAdapter implements BulletController {
                     }
                     shapeRenderer.setColor(0, 0.8f, 0.8f, 1);
                 }
-                shapeRenderer.rect((screenWidth * 0.2f) - 32, screenHeight - 32, progress, 8);
+                shapeRenderer.rect(140, screenHeight - 32, progress, 8);
             }
             shapeRenderer.end();
         }
@@ -284,6 +320,15 @@ public class WizardGame extends ApplicationAdapter implements BulletController {
 		batch.dispose();
         font.dispose();
 	}
+
+    private void updateMenu() {
+        if (currentSlotSelection.equals("slotA")) {
+            pointerPos.y = 114;
+        } else {
+            pointerPos.y = 84;
+        }
+        pointerPos.x = 80 + (abilityIndex * 44);
+    }
 
     private void update() {
         float delta = Gdx.graphics.getDeltaTime();
@@ -570,65 +615,113 @@ public class WizardGame extends ApplicationAdapter implements BulletController {
         inputVector.x = 0;
         inputVector.y = 0;
 
-        shootCooldown = shootCooldown - Gdx.graphics.getDeltaTime();
-        blockCooldown = blockCooldown - Gdx.graphics.getDeltaTime();
-        boolean canChangeDir = hitboxTimer < 0;
-        addSpeed = new Vector2();
-        if (!canChangeDir) {
-            actualSpeed = 0;
-        }
-        if (isLeftPressed) {
-            if (canChangeDir) {
-                if (isRight) {
-                    wizard.flip(true, false);
+        if (isMenuShown) {
+            if (!isUpPressed && !isDownPressed && !isLeftPressed && !isRightPressed) {
+                pointerLock = false;
+            }
+            if (!pointerLock) {
+                if (isLeftPressed) {
+                    abilityIndex--;
+                    pointerLock = true;
                 }
-                isRight = false;
-                inputVector.x = inputVector.x - 1;
-                lastDirection = inputVector.cpy();
-                currentWizard = wizard;
-            }
-            addSpeed.add(-actualSpeed, 0);
-        }
-        if (isRightPressed) {
-            if (canChangeDir) {
-                if (!isRight) {
-                    wizard.flip(true, false);
+                if (isRightPressed) {
+                    abilityIndex++;
+                    pointerLock = true;
                 }
-                isRight = true;   
-                inputVector.x = inputVector.x + 1;
-                lastDirection = inputVector.cpy();
-                currentWizard = wizard;
+                if (abilityIndex < 0) {
+                    abilityIndex = 0;
+                }
+                if (abilityIndex > 3) {
+                    abilityIndex = 3;
+                }
+                if (isUpPressed || isDownPressed) {
+                    pointerLock = true;
+                    if (currentSlotSelection.equals("slotA")) {
+                        currentSlotSelection = "slotB";
+                    } else {
+                        currentSlotSelection = "slotA";
+                    }
+                }
+                if (Gdx.input.isKeyPressed(Input.Keys.D)) {
+                    pointerLock = true;
+                    if (currentSlotSelection.equals("slotA")) {
+                        slotA = abilities.get(abilityIndex);
+                    } else {
+                        slotB = abilities.get(abilityIndex);
+                    }
+                }
             }
-            addSpeed.add(actualSpeed, 0);
-        }
-        if (isUpPressed) {
-            if (canChangeDir) {
-                inputVector.y = inputVector.y - 1;
-                lastDirection = inputVector.cpy();
-                currentWizard = upWizard;
+        } else {
+            shootCooldown = shootCooldown - Gdx.graphics.getDeltaTime();
+            blockCooldown = blockCooldown - Gdx.graphics.getDeltaTime();
+            boolean canChangeDir = hitboxTimer < 0;
+            addSpeed = new Vector2();
+            if (!canChangeDir) {
+                actualSpeed = 0;
             }
-            addSpeed.add(0, actualSpeed);
-        }
-        if (isDownPressed) {
-            if (canChangeDir) {
-                inputVector.y = inputVector.y + 1;
-                lastDirection = inputVector.cpy();
-                currentWizard = downWizard;
+            if (isLeftPressed) {
+                if (canChangeDir) {
+                    if (isRight) {
+                        wizard.flip(true, false);
+                    }
+                    isRight = false;
+                    inputVector.x = inputVector.x - 1;
+                    lastDirection = inputVector.cpy();
+                    currentWizard = wizard;
+                }
+                addSpeed.add(-actualSpeed, 0);
             }
-            addSpeed.add(0, -actualSpeed);
-        }
-        addSpeed.clamp(-actualSpeed,actualSpeed);
-        if (Gdx.input.isKeyPressed(Input.Keys.S)) {
-            useSlot(slotA); 
-        }
-        if (Gdx.input.isKeyPressed(Input.Keys.D)) {
-            useSlot(slotB);
+            if (isRightPressed) {
+                if (canChangeDir) {
+                    if (!isRight) {
+                        wizard.flip(true, false);
+                    }
+                    isRight = true;   
+                    inputVector.x = inputVector.x + 1;
+                    lastDirection = inputVector.cpy();
+                    currentWizard = wizard;
+                }
+                addSpeed.add(actualSpeed, 0);
+            }
+            if (isUpPressed) {
+                if (canChangeDir) {
+                    inputVector.y = inputVector.y - 1;
+                    lastDirection = inputVector.cpy();
+                    currentWizard = upWizard;
+                }
+                addSpeed.add(0, actualSpeed);
+            }
+            if (isDownPressed) {
+                if (canChangeDir) {
+                    inputVector.y = inputVector.y + 1;
+                    lastDirection = inputVector.cpy();
+                    currentWizard = downWizard;
+                }
+                addSpeed.add(0, -actualSpeed);
+            }
+            addSpeed.clamp(-actualSpeed,actualSpeed);
+            if (Gdx.input.isKeyPressed(Input.Keys.S)) {
+                useSlot(slotA); 
+            }
+            if (Gdx.input.isKeyPressed(Input.Keys.D)) {
+                useSlot(slotB);
+            }
+
         }
         if (Gdx.input.isKeyPressed(Input.Keys.ESCAPE)) {
             Gdx.app.exit();
         }
         if (wizardLife < 1 && Gdx.input.isKeyPressed(Input.Keys.SPACE)) {
             resetGame();
+        }
+        
+        if (Gdx.input.isKeyPressed(Input.Keys.R)) {
+            if (!showMenuLock) {
+                showMenuLock = true;
+                isMenuShown = !isMenuShown;
+            }
+        } else {
+            showMenuLock = false;
         }
 	}
 
