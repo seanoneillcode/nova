@@ -447,21 +447,25 @@ public class WizardGame extends ApplicationAdapter {
         }
         if (enemies.size() < 1 && started) {
             level++;
-            if (level % 2 == 0) {
-                numberOfSkeletons++;
+            if (level == 4) {
+                addWaveOfSkeletons(0, 0, 1);
+            } else {
+                if (level % 2 == 0) {
+                    numberOfSkeletons++;
+                }
+                if (level % 6 == 0) {
+                    numberOfArchers++;
+                }
+                if (level % 8 == 0) {
+                    numberOfWizards++;
+                }           
+                addWaveOfSkeletons(numberOfSkeletons, numberOfArchers, numberOfWizards);
             }
-            if (level % 6 == 0) {
-                numberOfArchers++;
-            }
-            if (level % 8 == 0) {
-                numberOfWizards++;
-            }
-            addWaveOfSkeletons();
         }
         waitStart = waitStart - delta;
         if (waitStart < 0 && !started) {
             started = true;
-            addWaveOfSkeletons();
+            addWaveOfSkeletons(numberOfSkeletons, numberOfArchers, numberOfWizards);
         }
     }
 
@@ -736,14 +740,14 @@ public class WizardGame extends ApplicationAdapter {
         }
 	}
 
-    private void addWaveOfSkeletons() {
-        for (int i = 0; i < numberOfSkeletons; i++) {
+    private void addWaveOfSkeletons(int numSkeletons, int numArchers, int numWizards) {
+        for (int i = 0; i < numSkeletons; i++) {
             addSkeleton();
         }
-        for (int i = 0; i < numberOfArchers; i++) {
+        for (int i = 0; i < numArchers; i++) {
             addShootingEnemy();
         }
-        for (int i = 0; i < numberOfWizards; i++) {
+        for (int i = 0; i < numWizards; i++) {
             addWizardEnemy();
         }
     }
