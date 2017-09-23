@@ -64,13 +64,13 @@ public class WizardGame extends ApplicationAdapter implements BulletController {
     private static final float PLAYER_SPEED = 40.0f;
     private static final float BULLET_SPEED = 80f;
     private static final float SKELETON_SPEED = 32f;
-    private static final float HITBOX_COOLDOWN = 0.25f;
-    private static final float HITBOX_TIMER = 0.5f;
+    private static final float HITBOX_COOLDOWN = 0.15f;
+    private static final float HITBOX_TIMER = 0.3f;
     private static final float DASH_TIMER = 2.0f;
     private static final float INITIAL_DASH = 2.4f;
     private static final float DASH_FRICTION = 0.92f;
     private static final float MAX_SHOOT_COOLDOWN = 0.8f;
-    private static final float MAX_BLOCK_COOLDOWN = 1.0f;
+    private static final float MAX_BLOCK_COOLDOWN = 0.5f;
     private static final float HURT_COOL_DOWN = 1f;
     private static final float WAIT_START_COOLDOWN = 2.0f;
     private BitmapFont font;
@@ -106,7 +106,7 @@ public class WizardGame extends ApplicationAdapter implements BulletController {
 
     // gun block dash stab
     String slotA = "dash";
-    String slotB = "gun";
+    String slotB = "stab";
     // String slotA = "gun";
     // String slotA = "block";
     private boolean pointerLock = false;
