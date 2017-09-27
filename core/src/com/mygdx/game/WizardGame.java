@@ -153,9 +153,9 @@ public class WizardGame extends ApplicationAdapter {
         camera.update();
 
 		batch = new SpriteBatch();
-        wizard = new TextureRegion(new Texture("wizard.png"));
-        upWizard = new TextureRegion(new Texture("wizard-up.png"));
-        downWizard = new TextureRegion(new Texture("wizard-down.png"));
+        wizard = new TextureRegion(new Texture("spaceman.png"));
+        upWizard = new TextureRegion(new Texture("spaceman-up.png"));
+        downWizard = new TextureRegion(new Texture("spaceman-down.png"));
         stabSprite = new Sprite(new Texture("stab.png"));
         stabSprite.setCenter(7,3);
         blockSprite = new Sprite(new Texture("sheild.png"));
