@@ -30,6 +30,7 @@ import com.mygdx.game.core.Enemy;
 import com.mygdx.game.core.Entity;
 import com.mygdx.game.core.Archer;
 import com.mygdx.game.core.Wizard;
+import com.mygdx.game.core.Eye;
 
 
 public class WizardGame extends ApplicationAdapter {
@@ -50,6 +51,7 @@ public class WizardGame extends ApplicationAdapter {
     private Sprite blockSprite;
     private Texture skeleton;
     private Texture archer;
+    private Texture eye;
     private Texture badWizard;
     private Texture bolt;
     private Vector2 playerPosition;
@@ -67,6 +69,7 @@ public class WizardGame extends ApplicationAdapter {
     private static final float SKELETON_SPEED = 16f;
     private static final float ARCHER_SPEED = 32f;
     private static final float WIZARD_SPEED = 32f;
+    private static final float EYE_SPEED = 36f;
     private static final float HITBOX_COOLDOWN = 0.15f;
     private static final float HITBOX_TIMER = 0.3f;
     private static final float DASH_TIMER = 2.0f;
@@ -95,6 +98,7 @@ public class WizardGame extends ApplicationAdapter {
     private int numberOfSkeletons;
     private int numberOfWizards;
     private int numberOfArchers;
+    private int numberOfEyes;
     private int wizardLife = 100;
     private int enemiesKilled = 0;
     private int level;
@@ -158,6 +162,7 @@ public class WizardGame extends ApplicationAdapter {
         blockSprite.setCenter(2,8);
         currentWizard = wizard;
         bolt = new Texture("bolt.png");
+        eye = new Texture("eye.png");
         skeleton = new Texture("skeleton.png");
         archer = new Texture("archer.png");
         badWizard = new Texture("wizard.png");
@@ -199,8 +204,8 @@ public class WizardGame extends ApplicationAdapter {
         enemies.clear();
         bullets.clear();
         enemiesKilled = 0;
-        numberOfSkeletons = 3;
-        numberOfArchers = 1;
+        numberOfSkeletons = 2;
+        numberOfArchers = 0;
         numberOfWizards = 0;
         started = false;
         dashTimer = 
@@ -407,6 +412,12 @@ public class WizardGame extends ApplicationAdapter {
             List<Bullet> collidingBullets = getCollidingBullets(blockSprite.getBoundingRectangle(), "player1");
             for (Bullet bullet : collidingBullets) {
                 bullet.ttl = -1;
+                // REBOUND LOGIC
+                // bullet.dir.x = bullet.dir.x * -1;
+                // bullet.dir.y = bullet.dir.y * -1;
+                // bullet.update();
+                // bullet.owner = "player1";
+                // bullet.ttl = 2f;
             }
         }
 
@@ -447,25 +458,39 @@ public class WizardGame extends ApplicationAdapter {
         }
         if (enemies.size() < 1 && started) {
             level++;
-            if (level == 4) {
-                addWaveOfSkeletons(0, 0, 1);
-            } else {
-                if (level % 2 == 0) {
-                    numberOfSkeletons++;
-                }
-                if (level % 6 == 0) {
-                    numberOfArchers++;
-                }
-                if (level % 8 == 0) {
-                    numberOfWizards++;
-                }           
-                addWaveOfSkeletons(numberOfSkeletons, numberOfArchers, numberOfWizards);
+            switch (level) {
+                case 1:
+                    addWaveOfSkeletons(4, 1, 0, 0);
+                break;
+                case 2:
+                    addWaveOfSkeletons(0, 0, 0, 2);
+                break;
+                case 4:
+                    addWaveOfSkeletons(0, 0, 1, 0);
+                break;
+                default:
+                    if (level % 2 == 0) {
+                        numberOfSkeletons++;
+                    }
+                    if (level % 6 == 0) {
+                        numberOfArchers++;
+                    }
+                    if (level % 7 == 0) {
+                        numberOfWizards++;
+                    }
+                    if (level % 8 == 0) {
+                        numberOfEyes++;
+                    }
+
+                    addWaveOfSkeletons(numberOfSkeletons, numberOfArchers, numberOfWizards, numberOfEyes);
+                break;
             }
         }
         waitStart = waitStart - delta;
         if (waitStart < 0 && !started) {
             started = true;
-            addWaveOfSkeletons(numberOfSkeletons, numberOfArchers, numberOfWizards);
+            addWaveOfSkeletons(4,0,0,0);
+            // addWaveOfSkeletons(numberOfSkeletons, numberOfArchers, numberOfWizards, numberOfEyes);
         }
     }
 
@@ -479,7 +504,7 @@ public class WizardGame extends ApplicationAdapter {
         return colliding;
     }
 
-    private List<Bullet> getCollidingBullets(Rectangle rect, String owner) {
+    public List<Bullet> getCollidingBullets(Rectangle rect, String owner) {
         List<Bullet> colliding = new ArrayList<Bullet>();
         for (Bullet e : bullets) {
             if(!e.isOwner(owner) && rect.overlaps(e.sprite.getBoundingRectangle())) {
@@ -488,7 +513,6 @@ public class WizardGame extends ApplicationAdapter {
         }
         return colliding;
     }
-
 
     private void hurtPlayer() {
         wizardLife = wizardLife - 1;
@@ -740,7 +764,7 @@ public class WizardGame extends ApplicationAdapter {
         }
 	}
 
-    private void addWaveOfSkeletons(int numSkeletons, int numArchers, int numWizards) {
+    private void addWaveOfSkeletons(int numSkeletons, int numArchers, int numWizards,int numEyes) {
         for (int i = 0; i < numSkeletons; i++) {
             addSkeleton();
         }
@@ -749,6 +773,9 @@ public class WizardGame extends ApplicationAdapter {
         }
         for (int i = 0; i < numWizards; i++) {
             addWizardEnemy();
+        }
+        for (int i = 0; i < numEyes; i++) {
+            addEye();
         }
     }
 
@@ -764,6 +791,11 @@ public class WizardGame extends ApplicationAdapter {
 
     private void addSkeleton() {
         Enemy e = new Enemy(skeleton, getRandomEdge(), 1, SKELETON_SPEED, "enemy");
+        enemies.add(e);
+    }
+
+    private void addEye() {
+        Eye e = new Eye(eye, getRandomEdge(), 1, EYE_SPEED, "enemy", this);
         enemies.add(e);
     }
 
