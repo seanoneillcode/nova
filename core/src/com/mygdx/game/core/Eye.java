@@ -41,12 +41,12 @@ public class Eye extends Enemy {
         
         Bullet dangerBullet = getDangerBullet();
         if (dangerBullet != null) {
-            this.speed = 72f;
+            this.speed = wizardGame.BULLET_SPEED * 1.5f;
             avoidBullets(dangerBullet);
             newX = newX + (delta * goalDirection.x * speed);
             newY = newY + (delta * goalDirection.y * speed);
         } else {
-            this.speed = 36f;
+            this.speed = wizardGame.EYE_SPEED;
             if (shootCooldown < 0) {
                 Vector2 pos = new Vector2(sprite.getX() + 4, sprite.getY() + 4);
                 Vector2 dir = new Vector2(player.x - sprite.getX(), player.y - sprite.getY()).nor();
@@ -88,17 +88,10 @@ public class Eye extends Enemy {
     }
 
     private void pickNewLocation(Vector2 player) {
-        float distance = player.dst2(new Vector2(sprite.getX(),sprite.getY()));
-        if (distance < 2400) {
+        float distance = player.dst2(new Vector2(sprite.getX(),sprite.getY()));   
+        if (distance > 17000) {
             Vector2 dir = new Vector2(player.x - sprite.getX(), player.y - sprite.getY()).nor();
-            dir.x = dir.x * -1;
-            dir.y = dir.y * -1;
             goalDirection = dir.cpy();
-        } else {
-            if (distance > 17000) {
-                Vector2 dir = new Vector2(player.x - sprite.getX(), player.y - sprite.getY()).nor();
-                goalDirection = dir.cpy();
-            }
         }
     }
 

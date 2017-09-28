@@ -65,11 +65,11 @@ public class WizardGame extends ApplicationAdapter {
     private float dashTimer;
     private float hitboxTimer;
     private static final float PLAYER_SPEED = 40.0f;
-    private static final float BULLET_SPEED = 60f;
+    public static final float BULLET_SPEED = 60f;
     private static final float SKELETON_SPEED = 16f;
     private static final float ARCHER_SPEED = 32f;
     private static final float WIZARD_SPEED = 32f;
-    private static final float EYE_SPEED = 36f;
+    public static final float EYE_SPEED = 36f;
     private static final float HITBOX_COOLDOWN = 0.15f;
     private static final float HITBOX_TIMER = 0.3f;
     private static final float DASH_TIMER = 2.0f;
@@ -78,7 +78,7 @@ public class WizardGame extends ApplicationAdapter {
     private static final float MAX_SHOOT_COOLDOWN = 0.8f;
     private static final float MAX_BLOCK_COOLDOWN = 0.5f;
     private static final float HURT_COOL_DOWN = 1f;
-    private static final float WAIT_START_COOLDOWN = 2.0f;
+    private static final float WAIT_START_COOLDOWN = 6.0f;
     private BitmapFont font;
 
     private float screenWidth;
@@ -182,7 +182,7 @@ public class WizardGame extends ApplicationAdapter {
         FileHandle handle = Gdx.files.internal("MavenPro-regular.ttf");
         FreeTypeFontGenerator generator = new FreeTypeFontGenerator(handle);
         FreeTypeFontGenerator.FreeTypeFontParameter parameter = new FreeTypeFontGenerator.FreeTypeFontParameter();
-        parameter.size = 10;
+        parameter.size = 12;
         font = generator.generateFont(parameter);
         screenWidth = Gdx.graphics.getWidth();
         screenHeight = Gdx.graphics.getHeight();
@@ -281,6 +281,13 @@ public class WizardGame extends ApplicationAdapter {
                 font.draw(batch, "H " + wizardLife, 200, 180);
                 font.draw(batch, slotA, 12, 178);
                 font.draw(batch, slotB, 60, 178);
+
+                if (!started) {
+                    font.draw(batch, "YOU MUST SURVIVE", 80, 120);
+                    font.draw(batch, "press 'enter' to changes slots", 42, 80);
+                    font.draw(batch, "press 's' to use slot A", 42, 45);
+                    font.draw(batch, "press 'd' to use slot B", 42, 25);
+                }
             } else {
                 font.draw(batch, "YOU RAN OUT OF Health", 80, 158);
                 font.draw(batch, "YOU DESTROYED  " + enemiesKilled + "  ENEMIES", 70, 128);
