@@ -331,9 +331,8 @@ public class WizardGame extends ApplicationAdapter {
                 }
             } else {
                 if (hasWon) {
-                    font.draw(batch, "YOU HAVE KILLED EVERYONE", 80, 158);
-                    font.draw(batch, "IT IS AN EMPTY VICTORY", 70, 128);
-                    font.draw(batch, "PRESS SPACE TO PLAY AGAIN", 70, 68);
+                    font.draw(batch, "YOU HAVE KILLED TO SURVIVE", 10, 158);
+                    font.draw(batch, "PRESS SPACE TO PLAY AGAIN", 30, 68);
                 } else {
                     font.draw(batch, "YOU RAN OUT OF Health", 80, 158);
                     font.draw(batch, "YOU DESTROYED  " + enemiesKilled + "  ENEMIES", 70, 128);
