@@ -54,6 +54,7 @@ public class WizardGame extends ApplicationAdapter {
     private Texture eye;
     private Texture badWizard;
     private Texture bolt;
+    private Texture charger;
     private TextureRegion background;
     private Sprite dashafter;
     private Vector2 playerPosition;
@@ -81,6 +82,7 @@ public class WizardGame extends ApplicationAdapter {
     private static final float MAX_BLOCK_COOLDOWN = 0.5f;
     private static final float HURT_COOL_DOWN = 1f;
     private static final float WAIT_START_COOLDOWN = 6.0f;
+    private static final float CHARGER_SPEED = 80f;
     private BitmapFont font;
 
     private float screenWidth;
@@ -101,6 +103,7 @@ public class WizardGame extends ApplicationAdapter {
     private int numberOfWizards;
     private int numberOfArchers;
     private int numberOfEyes;
+    private int numberOfChargers;
     private int wizardLife = 100;
     private int enemiesKilled = 0;
     private int level;
@@ -121,6 +124,7 @@ public class WizardGame extends ApplicationAdapter {
     // String slotA = "gun";
     // String slotA = "block";
     private boolean pointerLock = false;
+    private boolean hasWon = false;
 
     Preferences prefs;
     int previousHighScore;
@@ -144,10 +148,8 @@ public class WizardGame extends ApplicationAdapter {
         enemyDeathSound = Gdx.audio.newSound(Gdx.files.internal("death-scream.wav"));
         wizardShootSound = Gdx.audio.newSound(Gdx.files.internal("wizard-shoot.wav"));
         wizardDeathSound = Gdx.audio.newSound(Gdx.files.internal("wizard-hurt.wav"));
-        //loopSound = Gdx.audio.newSound(Gdx.files.internal("bad-loop.wav"));
-        //loopSound.loop(1.0f);
-        // loopSound2 = Gdx.audio.newSound(Gdx.files.internal("bad-loop2.wav"));
-        //loopSound2.loop(1.0f);
+        loopSound = Gdx.audio.newSound(Gdx.files.internal("bad-loop.wav"));
+        loopSound2 = Gdx.audio.newSound(Gdx.files.internal("bad-loop2.wav"));
         shapeRenderer = new ShapeRenderer();
         float w = Gdx.graphics.getWidth();
         float h = Gdx.graphics.getHeight();
@@ -168,6 +170,7 @@ public class WizardGame extends ApplicationAdapter {
         eye = new Texture("eye.png");
         skeleton = new Texture("skeleton.png");
         archer = new Texture("archer.png");
+        charger = new Texture("charger.png");
         badWizard = new Texture("wizard.png");
         playerPosition = getRandomPosition();
 
@@ -199,6 +202,11 @@ public class WizardGame extends ApplicationAdapter {
         inputVector = new Vector2();
         lastDirection = new Vector2(1,0);
         dashMovement = new Vector2();
+        if (soundEffectsOn) {
+            loopSound.loop(0.5f);
+            loopSound2.loop(0.5f);            
+        }
+        
         resetGame();
 	}
 
@@ -212,12 +220,14 @@ public class WizardGame extends ApplicationAdapter {
         numberOfSkeletons = 2;
         numberOfArchers = 0;
         numberOfWizards = 0;
+        numberOfChargers = 0;
         started = false;
         dashTimer = 
         hitboxTimer = -1.0f;
         blockTimer = -1f;
         level = 0;
         shootCooldown = -1;
+        hasWon = false;
         blockCooldown = -1;
     }
 
@@ -269,7 +279,7 @@ public class WizardGame extends ApplicationAdapter {
             batch.draw(selectionPointer, pointerPos.x, pointerPos.y);
         } else {
             batch.draw(background, 0, 0);
-            if (wizardLife > 0) {
+            if (wizardLife > 0 && !hasWon) {
                 update();
                 if (dashTimer > 0) {
                     dashafter.setColor(1, 1, 1, 1.0f * (dashTimer / DASH_TIMER));
@@ -290,23 +300,31 @@ public class WizardGame extends ApplicationAdapter {
                     blockSprite.draw(batch);
                 }
                 font.draw(batch, "H " + wizardLife, 200, 180);
+                font.draw(batch, "W " + (level + 1), 200, 168);
                 font.draw(batch, slotA, 12, 178);
                 font.draw(batch, slotB, 60, 178);
 
                 if (!started) {
-                    font.draw(batch, "YOU MUST SURVIVE", 80, 120);
+                    font.draw(batch, "starting in " + ((int)waitStart), 62, 150);
+                    font.draw(batch, "SURVIVE 10 WAVES OF ENEMIES TO WIN", 10, 120);
                     font.draw(batch, "press 'enter' to changes slots", 42, 80);
                     font.draw(batch, "press 's' to use slot A", 42, 45);
                     font.draw(batch, "press 'd' to use slot B", 42, 25);
                 }
             } else {
-                font.draw(batch, "YOU RAN OUT OF Health", 80, 158);
-                font.draw(batch, "YOU DESTROYED  " + enemiesKilled + "  ENEMIES", 70, 128);
-                font.draw(batch, "PRESS SPACE TO PLAY AGAIN", 70, 68);
-                if (enemiesKilled == previousHighScore) {
-                    font.draw(batch, "NEW HIGH SCORE!", 70, 98);
+                if (hasWon) {
+                    font.draw(batch, "YOU HAVE KILLED EVERYONE", 80, 158);
+                    font.draw(batch, "IT IS AN EMPTY VICTORY", 70, 128);
+                    font.draw(batch, "PRESS SPACE TO PLAY AGAIN", 70, 68);
                 } else {
-                    font.draw(batch, "CURRENT HIGH SCORE is " + this.previousHighScore, 70, 98);
+                    font.draw(batch, "YOU RAN OUT OF Health", 80, 158);
+                    font.draw(batch, "YOU DESTROYED  " + enemiesKilled + "  ENEMIES", 70, 128);
+                    font.draw(batch, "PRESS SPACE TO PLAY AGAIN", 70, 68);
+                    if (enemiesKilled == previousHighScore) {
+                        font.draw(batch, "NEW HIGH SCORE!", 70, 98);
+                    } else {
+                        font.draw(batch, "CURRENT HIGH SCORE is " + this.previousHighScore, 70, 98);
+                    }
                 }
             }
         }
@@ -478,36 +496,41 @@ public class WizardGame extends ApplicationAdapter {
             level++;
             switch (level) {
                 case 1:
-                    addWaveOfSkeletons(4, 1, 0, 0);
-                break;
+                    addWaveOfSkeletons(4, 1, 0, 0, 0);
+                    break;
                 case 2:
-                    addWaveOfSkeletons(0, 0, 0, 2);
-                break;
+                    addWaveOfSkeletons(0, 0, 0, 2, 0);
+                    break;
+                case 3:
+                    addWaveOfSkeletons(4, 1, 0, 0, 1);
+                    break;
                 case 4:
-                    addWaveOfSkeletons(0, 0, 1, 0);
-                break;
-                default:
-                    if (level % 2 == 0) {
-                        numberOfSkeletons++;
-                    }
-                    if (level % 6 == 0) {
-                        numberOfArchers++;
-                    }
-                    if (level % 7 == 0) {
-                        numberOfWizards++;
-                    }
-                    if (level % 8 == 0) {
-                        numberOfEyes++;
-                    }
-
-                    addWaveOfSkeletons(numberOfSkeletons, numberOfArchers, numberOfWizards, numberOfEyes);
-                break;
+                    addWaveOfSkeletons(0, 0, 1, 0, 0);
+                    break;
+                case 5:
+                    addWaveOfSkeletons(4, 1, 0, 1, 1);
+                    break;
+                case 6:
+                    addWaveOfSkeletons(8, 0, 0, 2, 2);
+                    break;
+                case 7:
+                    addWaveOfSkeletons(0, 0, 0, 0, 5);
+                    break;
+                case 8:
+                    addWaveOfSkeletons(4, 1, 1, 1, 1);
+                    break;
+                case 9:
+                    addWaveOfSkeletons(0, 2, 2, 2, 0);
+                    break;
+                case 10:
+                    hasWon = true;
+                    break;
             }
         }
         waitStart = waitStart - delta;
         if (waitStart < 0 && !started) {
             started = true;
-            addWaveOfSkeletons(4,0,0,0);
+            addWaveOfSkeletons(4,0,0,0,0);
             // addWaveOfSkeletons(numberOfSkeletons, numberOfArchers, numberOfWizards, numberOfEyes);
         }
     }
@@ -769,8 +792,10 @@ public class WizardGame extends ApplicationAdapter {
         if (Gdx.input.isKeyPressed(Input.Keys.ESCAPE)) {
             Gdx.app.exit();
         }
-        if (wizardLife < 1 && Gdx.input.isKeyPressed(Input.Keys.SPACE)) {
-            resetGame();
+        if (Gdx.input.isKeyPressed(Input.Keys.SPACE)) {
+            if (wizardLife < 1 || hasWon) {
+                resetGame();                
+            }
         }
         
         if (Gdx.input.isKeyPressed(Input.Keys.ENTER)) {
@@ -783,7 +808,7 @@ public class WizardGame extends ApplicationAdapter {
         }
 	}
 
-    private void addWaveOfSkeletons(int numSkeletons, int numArchers, int numWizards,int numEyes) {
+    private void addWaveOfSkeletons(int numSkeletons, int numArchers, int numWizards,int numEyes, int numChargers) {
         for (int i = 0; i < numSkeletons; i++) {
             addSkeleton();
         }
@@ -795,6 +820,9 @@ public class WizardGame extends ApplicationAdapter {
         }
         for (int i = 0; i < numEyes; i++) {
             addEye();
+        }
+        for (int i = 0; i < numChargers; i++) {
+            addCharger();
         }
     }
 
@@ -813,6 +841,10 @@ public class WizardGame extends ApplicationAdapter {
         enemies.add(e);
     }
 
+    private void addCharger() {
+        Enemy e = new Enemy(charger, getRandomEdge(), 1, CHARGER_SPEED, "enemy");
+        enemies.add(e);
+    }
     private void addEye() {
         Eye e = new Eye(eye, getRandomEdge(), 1, EYE_SPEED, "enemy", this);
         enemies.add(e);
