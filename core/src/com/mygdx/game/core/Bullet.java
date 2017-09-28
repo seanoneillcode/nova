@@ -13,6 +13,7 @@ public class Bullet implements Pwned {
     public Sprite sprite;
     public Vector2 dir;
     public String owner;
+    private float rotation;
 
     public Bullet(Texture texture, Vector2 dir, Vector2 pos, String owner) {
         sprite = new Sprite(texture);
@@ -20,6 +21,7 @@ public class Bullet implements Pwned {
         ttl = 2f;
         this.dir = dir;
         this.owner = owner;
+        this.rotation = 0;
     }
 
     public boolean shouldRemove() {
@@ -32,6 +34,11 @@ public class Bullet implements Pwned {
         float newX = sprite.getX() + (delta * dir.x);
         float newY = sprite.getY() + (delta * dir.y);
         sprite.setPosition(newX, newY);
+        rotation = rotation + 2f;
+        if (rotation > 360f) {
+            rotation = rotation - 360f;
+        }
+        sprite.rotate(rotation);
     }
 
     public String getOwner() {

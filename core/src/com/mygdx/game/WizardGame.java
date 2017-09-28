@@ -54,6 +54,8 @@ public class WizardGame extends ApplicationAdapter {
     private Texture eye;
     private Texture badWizard;
     private Texture bolt;
+    private TextureRegion background;
+    private Sprite dashafter;
     private Vector2 playerPosition;
     private Vector2 hitboxOffset;
     private Vector2 hitboxPos;
@@ -111,6 +113,7 @@ public class WizardGame extends ApplicationAdapter {
     private ShapeRenderer shapeRenderer;
 
     private Vector2 lastDirection;
+    private Vector2 dashafterPos;
 
     // gun block dash stab
     String slotA = "dash";
@@ -168,6 +171,8 @@ public class WizardGame extends ApplicationAdapter {
         badWizard = new Texture("wizard.png");
         playerPosition = getRandomPosition();
 
+        background = new TextureRegion(new Texture("background.png"));
+        dashafter = new Sprite(new Texture("dash-after.png"));
         abilityMenu = new TextureRegion(new Texture("ability-select.png"));
         slotASelect = new TextureRegion(new Texture("slota-select.png"));
         slotBSelect = new TextureRegion(new Texture("slotb-select.png"));
@@ -263,8 +268,14 @@ public class WizardGame extends ApplicationAdapter {
             // draw pointer
             batch.draw(selectionPointer, pointerPos.x, pointerPos.y);
         } else {
+            batch.draw(background, 0, 0);
             if (wizardLife > 0) {
                 update();
+                if (dashTimer > 0) {
+                    dashafter.setColor(1, 1, 1, 1.0f * (dashTimer / DASH_TIMER));
+                    dashafter.setPosition(dashafterPos.x, dashafterPos.y);
+                    dashafter.draw(batch);
+                }
                 batch.draw(currentWizard, playerPosition.x, playerPosition.y);
                 for (Bullet b : bullets) {
                     b.sprite.draw(batch);
@@ -639,6 +650,7 @@ public class WizardGame extends ApplicationAdapter {
                 dashMovement = lastDirection.cpy().scl(INITIAL_DASH);
                 dashMovement.y = dashMovement.y * -1;
                 dashTimer = DASH_TIMER;
+                dashafterPos = playerPosition.cpy();
             }
         }
     }
