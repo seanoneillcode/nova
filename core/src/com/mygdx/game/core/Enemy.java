@@ -62,4 +62,8 @@ public class Enemy implements Entity, Pwned {
     public boolean isOwner(String other) {
         return this.owner.equals(other);
     }
+
+    public Vector2 getPos() {
+        return new Vector2(sprite.getX(), sprite.getY());
+    }
 }

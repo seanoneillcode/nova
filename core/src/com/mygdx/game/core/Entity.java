@@ -11,4 +11,5 @@ public interface Entity extends Pwned {
 	public void takeDamage(int damage);
 	public Rectangle getBoundingRectangle();
 	public void handleBlock(Vector2 push);
+	public Vector2 getPos();
 }

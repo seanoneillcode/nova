@@ -7,6 +7,7 @@ import java.lang.Math;
 
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Graphics;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Preferences;
 import com.badlogic.gdx.audio.Sound;
@@ -31,6 +32,7 @@ import com.mygdx.game.core.Entity;
 import com.mygdx.game.core.Archer;
 import com.mygdx.game.core.Wizard;
 import com.mygdx.game.core.Eye;
+import com.mygdx.game.core.Damage;
 
 
 public class WizardGame extends ApplicationAdapter {
@@ -49,12 +51,15 @@ public class WizardGame extends ApplicationAdapter {
     private TextureRegion selectionPointer;
     private Sprite stabSprite;
     private Sprite blockSprite;
+    private List<Damage> damages;
     private Texture skeleton;
     private Texture archer;
     private Texture eye;
     private Texture badWizard;
     private Texture bolt;
     private Texture charger;
+    private Texture damageTex;
+    private Texture playerDamageTex;
     private TextureRegion background;
     private Sprite dashafter;
     private Vector2 playerPosition;
@@ -83,6 +88,7 @@ public class WizardGame extends ApplicationAdapter {
     private static final float HURT_COOL_DOWN = 1f;
     private static final float WAIT_START_COOLDOWN = 6.0f;
     private static final float CHARGER_SPEED = 80f;
+    private static final float DAMAGE_TTL = 1.0f;
     private BitmapFont font;
 
     private float screenWidth;
@@ -135,6 +141,7 @@ public class WizardGame extends ApplicationAdapter {
     private boolean soundEffectsOn = false;
     private boolean isMenuShown = false;
     private boolean showMenuLock = false;
+    private boolean fullscreenLock = false;
     private Vector2 pointerPos;
     private String currentSlotSelection = "slotA";
     private int abilityIndex = 0;
@@ -161,6 +168,8 @@ public class WizardGame extends ApplicationAdapter {
         wizard = new TextureRegion(new Texture("spaceman.png"));
         upWizard = new TextureRegion(new Texture("spaceman-up.png"));
         downWizard = new TextureRegion(new Texture("spaceman-down.png"));
+        damageTex = new Texture("damage.png");
+        playerDamageTex = new Texture("player-damage.png");
         stabSprite = new Sprite(new Texture("stab.png"));
         stabSprite.setCenter(7,3);
         blockSprite = new Sprite(new Texture("sheild.png"));
@@ -196,6 +205,7 @@ public class WizardGame extends ApplicationAdapter {
         screenHeight = Gdx.graphics.getHeight();
         bullets = new ArrayList<Bullet>();
         enemies = new ArrayList<Entity>();
+        damages = new ArrayList<Damage>();
         hitboxOffset = new Vector2();
         blockPos = new Vector2();
         blockOffset = new Vector2();
@@ -215,6 +225,7 @@ public class WizardGame extends ApplicationAdapter {
         wizardLife = 10;
         playerPosition = new Vector2(128, 128);
         enemies.clear();
+        damages.clear();
         bullets.clear();
         enemiesKilled = 0;
         numberOfSkeletons = 2;
@@ -257,6 +268,10 @@ public class WizardGame extends ApplicationAdapter {
         bullets.add(b);
     }
 
+    public void createDamage(Vector2 pos, Texture texture) {
+        Damage d = new Damage(texture, pos.cpy(), DAMAGE_TTL);
+        damages.add(d);
+    }
 
 	@Override
 	public void render () {
@@ -292,6 +307,9 @@ public class WizardGame extends ApplicationAdapter {
                 }
                 for (Entity e : enemies) {
                     e.draw(batch);
+                }
+                for (Damage d : damages) {
+                    d.draw(batch);
                 }
                 if (hitboxTimer >= HITBOX_COOLDOWN) {
                     stabSprite.draw(batch);               
@@ -413,11 +431,22 @@ public class WizardGame extends ApplicationAdapter {
                 }
                 for (Entity entity : collidingEnemies) {
                     entity.takeDamage(1);
+                    createDamage(entity.getPos(), damageTex);
                 }
                 if (playerRectangle.overlaps(bullet.sprite.getBoundingRectangle()) && !bullet.isOwner("player1")) {
                     bullet.ttl = -1;
                     hurtPlayer();
+                    createDamage(playerPosition.cpy(), playerDamageTex);
                 }    
+            }
+        }
+
+        Iterator<Damage> iterd = damages.listIterator();
+        while (iterd.hasNext()) {
+            Damage d = iterd.next();
+            d.update();
+            if (d.shouldRemove()) {
+                iterd.remove();
             }
         }
 
@@ -431,6 +460,7 @@ public class WizardGame extends ApplicationAdapter {
             List<Entity> collidingEnemies = getCollidingEnemies(stabSprite.getBoundingRectangle(), "player1");
             for (Entity entity : collidingEnemies) {
                 entity.takeDamage(1);
+                createDamage(entity.getPos(), damageTex);
             }
         }
 
@@ -474,9 +504,11 @@ public class WizardGame extends ApplicationAdapter {
         List<Entity> collidingEnemies = getCollidingEnemies(playerRectangle, "player1");
         if (collidingEnemies.size() > 0) {
             hurtPlayer();
+            createDamage(playerPosition.cpy(), playerDamageTex);
         }
         for (Entity entity : collidingEnemies) {
             entity.takeDamage(1);
+            createDamage(entity.getPos(), damageTex);
         }
         hurtCooldown = hurtCooldown - delta;
 
@@ -806,6 +838,15 @@ public class WizardGame extends ApplicationAdapter {
         } else {
             showMenuLock = false;
         }
+
+        if (Gdx.input.isKeyPressed(Input.Keys.H)) {
+            if (!fullscreenLock) {
+                fullscreenLock = true;
+                switchToFullScreen();
+            }
+        } else {
+            fullscreenLock = false;
+        }
 	}
 
     private void addWaveOfSkeletons(int numSkeletons, int numArchers, int numWizards,int numEyes, int numChargers) {
@@ -867,6 +908,16 @@ public class WizardGame extends ApplicationAdapter {
                 break;
         }
         return pos;
+    }
+
+    private void switchToFullScreen() {
+        Boolean fullScreen = Gdx.graphics.isFullscreen();
+        Graphics.DisplayMode currentMode = Gdx.graphics.getDisplayMode();
+        if (fullScreen == true) {
+            Gdx.graphics.setWindowedMode((int)screenWidth, (int)screenHeight);
+        } else {
+            Gdx.graphics.setFullscreenMode(currentMode);
+        }
     }
 
 }
