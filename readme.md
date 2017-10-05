@@ -25,8 +25,9 @@ If the player kills the baron, they can return to the village and gain closure.
  * add dialog mode for images and text.
  * create character images
  * create dialog
- * create levels - with defined goals and setup, background images too
+ * DONE - create levels - with defined goals and setup, background images too
  * DONE - add moving camera 
+ * create ship in forest level - image
  * add npc boxes to start dialogs
  * add ship image and collision code for it
 

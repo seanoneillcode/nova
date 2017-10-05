@@ -35,6 +35,8 @@ import com.mygdx.game.core.Wizard;
 import com.mygdx.game.core.Eye;
 import com.mygdx.game.core.Damage;
 import com.mygdx.game.core.Level;
+import com.mygdx.game.core.WaveLevel;
+import com.mygdx.game.core.ExploreLevel;
 
 
 public class WizardGame extends ApplicationAdapter {
@@ -62,7 +64,6 @@ public class WizardGame extends ApplicationAdapter {
     private Texture charger;
     private Texture damageTex;
     private Texture playerDamageTex;
-    private TextureRegion background;
     private Sprite dashafter;
     private Vector2 playerPosition;
     private Vector2 hitboxOffset;
@@ -88,7 +89,7 @@ public class WizardGame extends ApplicationAdapter {
     private static final float MAX_SHOOT_COOLDOWN = 0.8f;
     private static final float MAX_BLOCK_COOLDOWN = 0.5f;
     private static final float HURT_COOL_DOWN = 1f;
-    private static final float WAIT_START_COOLDOWN = 6.0f;
+    private static final float WAIT_START_COOLDOWN = 2.0f;
     private static final float CHARGER_SPEED = 80f;
     private static final float DAMAGE_TTL = 1.0f;
     private BitmapFont font;
@@ -189,7 +190,6 @@ public class WizardGame extends ApplicationAdapter {
         badWizard = new Texture("wizard.png");
         playerPosition = getRandomPosition();
 
-        background = new TextureRegion(new Texture("background.png"));
         dashafter = new Sprite(new Texture("dash-after.png"));
         abilityMenu = new TextureRegion(new Texture("ability-select.png"));
         slotASelect = new TextureRegion(new Texture("slota-select.png"));
@@ -203,17 +203,21 @@ public class WizardGame extends ApplicationAdapter {
         abilities.add("gun");
 
         levels = new ArrayList<Level>();
-        levels.add(new Level("background.png", 2,0,0,0,0));
-        levels.add(new Level("background.png", 4,0,0,0,0));
-        levels.add(new Level("background.png", 6,0,0,0,0));
-        levels.add(new Level("background.png", 4,1,0,0,0));
-        levels.add(new Level("background.png", 6,2,0,0,0));
-        levels.add(new Level("background.png", 0,0,1,0,0));
-        levels.add(new Level("background.png", 0,0,0,2,0));
-        levels.add(new Level("background.png", 4,1,0,1,0));
-        levels.add(new Level("background.png", 6,0,0,0,2));
-        levels.add(new Level("background.png", 0,0,0,0,5));
-        levels.add(new Level("background.png", 6,1,1,1,1));
+        levels.add(new WaveLevel("background-ship.png", 1,0,0,0,0));
+        levels.add(new ExploreLevel("background-other.png", new Rectangle(0,0,32,32)));
+        levels.add(new WaveLevel("background.png", 1,0,0,0,0));
+        levels.add(new ExploreLevel("background-other.png", new Rectangle(0,0,32,32)));
+        levels.add(new WaveLevel("background.png", 1,0,0,0,0));
+        // levels.add(new WaveLevel("background.png", 4,0,0,0,0));
+        // levels.add(new WaveLevel("background.png", 6,0,0,0,0));
+        // levels.add(new WaveLevel("background.png", 4,1,0,0,0));
+        // levels.add(new WaveLevel("background.png", 6,2,0,0,0));
+        // levels.add(new WaveLevel("background.png", 0,0,1,0,0));
+        // levels.add(new WaveLevel("background.png", 0,0,0,2,0));
+        // levels.add(new WaveLevel("background.png", 4,1,0,1,0));
+        // levels.add(new WaveLevel("background.png", 6,0,0,0,2));
+        // levels.add(new WaveLevel("background.png", 0,0,0,0,5));
+        // levels.add(new WaveLevel("background.png", 6,1,1,1,1));
 
         FileHandle handle = Gdx.files.internal("mavenpro-regular.ttf");
         FreeTypeFontGenerator generator = new FreeTypeFontGenerator(handle);
@@ -263,16 +267,22 @@ public class WizardGame extends ApplicationAdapter {
         shootCooldown = -1;
         hasWon = false;
         blockCooldown = -1;
-        levelIndex = 0;
+        levelIndex = -1;
         for (Level level : levels) {
             level.reset();
         }
-        currentLevel = levels.get(levelIndex);
     }
 
-    private void loadLevel(Level level) {
-        if (!level.isLoaded()) {
-            level.load(this);
+    private void loadNextLevel() {
+        levelIndex++;
+        if (levelIndex >= levels.size()) {
+            levelIndex = 0;
+            hasWon = true;
+        } else {
+            currentLevel = levels.get(levelIndex);        
+            if (!currentLevel.isLoaded()) {
+                currentLevel.load(this);
+            }
         }
     }
 
@@ -333,16 +343,14 @@ public class WizardGame extends ApplicationAdapter {
         offset.y = (offset.y) - 104.0f;
         if (isMenuShown) {
             updateMenu();
-            // draw menu
             batch.draw(abilityMenu, 10 + offset.x, 60 + offset.y);
-            // draw slota
             batch.draw(slotASelect, 70 + (abilities.indexOf(slotA) * 44) + offset.x, 104 + offset.y);            
-            // draw slotb
             batch.draw(slotBSelect, 70 + (abilities.indexOf(slotB) * 44) + offset.x, 74 + offset.y);
-            // draw pointer
             batch.draw(selectionPointer, pointerPos.x  + offset.x, pointerPos.y + offset.y);
         } else {
-            currentLevel.draw(batch);
+            if (currentLevel != null) {
+                currentLevel.draw(batch);
+            }
             if (wizardLife > 0 && !hasWon) {
                 update();
                 if (dashTimer > 0) {
@@ -433,6 +441,10 @@ public class WizardGame extends ApplicationAdapter {
         font.dispose();
 	}
 
+    public Rectangle getPlayerRect() {
+        return new Rectangle(playerPosition.x + 4, playerPosition.y + 4, 10, 10);
+    }
+
     private void updateMenu() {
         if (currentSlotSelection.equals("slotA")) {
             pointerPos.y = 114;
@@ -463,7 +475,7 @@ public class WizardGame extends ApplicationAdapter {
         if (playerPosition.y > screenHeight) {
             playerPosition.y = screenHeight;
         }
-        Rectangle playerRectangle = new Rectangle(playerPosition.x + 4, playerPosition.y + 4, 10, 10);
+        Rectangle playerRectangle = getPlayerRect();
 
         Iterator<Bullet> iter = bullets.listIterator();
         while (iter.hasNext()) {
@@ -534,9 +546,6 @@ public class WizardGame extends ApplicationAdapter {
             }
         }
 
-
-        // dashMovement
-
         if (dashTimer >= 0) {
             dashTimer = dashTimer - delta;            
         }
@@ -548,7 +557,9 @@ public class WizardGame extends ApplicationAdapter {
             dashMovement.y = 0;
         }
 
-        currentLevel.update(this);
+        if (currentLevel != null) {
+            currentLevel.update(this);
+        }
 
         List<Entity> collidingEnemies = getCollidingEnemies(playerRectangle, "player1");
         if (collidingEnemies.size() > 0) {
@@ -573,19 +584,13 @@ public class WizardGame extends ApplicationAdapter {
                 }
             }
         }
-        if (currentLevel.isDone() && started) {
-            levelIndex++;
-            if (levelIndex >= levels.size()) {
-                levelIndex = 0;
-                hasWon = true;
-            } else {
-                loadLevel(levels.get(levelIndex));
-            }
+        if (currentLevel != null && currentLevel.isDone() && started) {
+            loadNextLevel();
         }
         waitStart = waitStart - delta;
         if (waitStart < 0 && !started) {
             started = true;
-            loadLevel(currentLevel);
+            loadNextLevel();
         }
     }
 
