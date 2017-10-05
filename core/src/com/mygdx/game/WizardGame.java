@@ -25,6 +25,7 @@ import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.math.Interpolation;
 import com.mygdx.game.core.Bullet;
 import com.mygdx.game.core.Enemy;
@@ -147,6 +148,8 @@ public class WizardGame extends ApplicationAdapter {
     private int abilityIndex = 0;
     private List<String> abilities;
 
+    private Vector2 cameraPos;
+
     @Override
 	public void create () {
         prefs = Gdx.app.getPreferences("NovaGamePreferences");
@@ -161,7 +164,6 @@ public class WizardGame extends ApplicationAdapter {
         float w = Gdx.graphics.getWidth();
         float h = Gdx.graphics.getHeight();
         camera = new OrthographicCamera(WORLD_WIDTH, WORLD_HEIGHT * (h / w));
-        camera.position.set(camera.viewportWidth / 2f, camera.viewportHeight / 2f, 0);
         camera.update();
 
 		batch = new SpriteBatch();
@@ -201,6 +203,7 @@ public class WizardGame extends ApplicationAdapter {
         FreeTypeFontGenerator.FreeTypeFontParameter parameter = new FreeTypeFontGenerator.FreeTypeFontParameter();
         parameter.size = 12;
         font = generator.generateFont(parameter);
+        font.setUseIntegerPositions(false);
         screenWidth = Gdx.graphics.getWidth();
         screenHeight = Gdx.graphics.getHeight();
         bullets = new ArrayList<Bullet>();
@@ -217,6 +220,8 @@ public class WizardGame extends ApplicationAdapter {
             loopSound2.loop(0.5f);            
         }
         
+        cameraPos = new Vector2();
+
         resetGame();
 	}
 
@@ -224,6 +229,7 @@ public class WizardGame extends ApplicationAdapter {
         waitStart = WAIT_START_COOLDOWN;
         wizardLife = 10;
         playerPosition = new Vector2(128, 128);
+        cameraPos = playerPosition.cpy();
         enemies.clear();
         damages.clear();
         bullets.clear();
@@ -273,8 +279,20 @@ public class WizardGame extends ApplicationAdapter {
         damages.add(d);
     }
 
+    private Vector3 getLerpCamera() {
+        Vector3 target = new Vector3(playerPosition.x, playerPosition.y, 0);
+        final float speed = 2.0f * Gdx.graphics.getDeltaTime();
+        float ispeed = 1.0f - speed;
+        Vector3 cameraPosition = camera.position.cpy();
+        cameraPosition.scl(ispeed);
+        target.scl(speed);
+        cameraPosition.add(target);
+        return cameraPosition;
+    }
+
 	@Override
 	public void render () {
+        camera.position.set(getLerpCamera());
         camera.update();
         batch.setProjectionMatrix(camera.combined);
         handleInput();
@@ -282,16 +300,19 @@ public class WizardGame extends ApplicationAdapter {
 		Gdx.gl.glClearColor(0, 0, 0, 1);
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 		batch.begin();
+        Vector2 offset = new Vector2(camera.position.x, camera.position.y);
+        offset.x = (offset.x) - 128.0f;
+        offset.y = (offset.y) - 104.0f;
         if (isMenuShown) {
             updateMenu();
             // draw menu
-            batch.draw(abilityMenu, 10, 60);
+            batch.draw(abilityMenu, 10 + offset.x, 60 + offset.y);
             // draw slota
-            batch.draw(slotASelect, 70 + (abilities.indexOf(slotA) * 44), 104);            
+            batch.draw(slotASelect, 70 + (abilities.indexOf(slotA) * 44) + offset.x, 104 + offset.y);            
             // draw slotb
-            batch.draw(slotBSelect, 70 + (abilities.indexOf(slotB) * 44), 74);
+            batch.draw(slotBSelect, 70 + (abilities.indexOf(slotB) * 44) + offset.x, 74 + offset.y);
             // draw pointer
-            batch.draw(selectionPointer, pointerPos.x, pointerPos.y);
+            batch.draw(selectionPointer, pointerPos.x  + offset.x, pointerPos.y + offset.y);
         } else {
             batch.draw(background, 0, 0);
             if (wizardLife > 0 && !hasWon) {
@@ -317,30 +338,30 @@ public class WizardGame extends ApplicationAdapter {
                 if (blockTimer >= MAX_BLOCK_COOLDOWN * 0.5f) {
                     blockSprite.draw(batch);
                 }
-                font.draw(batch, "H " + wizardLife, 200, 180);
-                font.draw(batch, "W " + (level + 1), 200, 168);
-                font.draw(batch, slotA, 12, 178);
-                font.draw(batch, slotB, 60, 178);
+                font.draw(batch, "H " + wizardLife, 200.0f + offset.x, 180.0f + offset.y);
+                font.draw(batch, "W " + (level + 1), 200f + offset.x, 168f + offset.y);
+                font.draw(batch, slotA, 12 + offset.x, 178 + offset.y);
+                font.draw(batch, slotB, 60 + offset.x, 178 + offset.y);
 
                 if (!started) {
-                    font.draw(batch, "starting in " + ((int)waitStart), 62, 150);
-                    font.draw(batch, "SURVIVE 10 WAVES OF ENEMIES TO WIN", 10, 120);
-                    font.draw(batch, "press 'enter' to changes slots", 42, 80);
-                    font.draw(batch, "press 's' to use slot A", 42, 45);
-                    font.draw(batch, "press 'd' to use slot B", 42, 25);
+                    font.draw(batch, "starting in " + ((int)waitStart), offset.x + 62, offset.y + 150);
+                    font.draw(batch, "SURVIVE 10 WAVES OF ENEMIES TO WIN", offset.x + 10, offset.y + 120);
+                    font.draw(batch, "press 'enter' to changes slots", offset.x + 42, offset.y + 80);
+                    font.draw(batch, "press 's' to use slot A", offset.x + 42, offset.y + 45);
+                    font.draw(batch, "press 'd' to use slot B", offset.x + 42, offset.y + 25);
                 }
             } else {
                 if (hasWon) {
-                    font.draw(batch, "YOU HAVE KILLED TO SURVIVE", 10, 158);
-                    font.draw(batch, "PRESS SPACE TO PLAY AGAIN", 30, 68);
+                    font.draw(batch, "YOU HAVE KILLED TO SURVIVE", offset.x + 10, offset.y + 158);
+                    font.draw(batch, "PRESS SPACE TO PLAY AGAIN", offset.x + 30, offset.y + 68);
                 } else {
-                    font.draw(batch, "YOU RAN OUT OF Health", 80, 158);
-                    font.draw(batch, "YOU DESTROYED  " + enemiesKilled + "  ENEMIES", 70, 128);
-                    font.draw(batch, "PRESS SPACE TO PLAY AGAIN", 70, 68);
+                    font.draw(batch, "YOU RAN OUT OF Health", offset.x + 80, offset.y + 158);
+                    font.draw(batch, "YOU DESTROYED  " + enemiesKilled + "  ENEMIES", offset.x + 70, offset.y + 128);
+                    font.draw(batch, "PRESS SPACE TO PLAY AGAIN", offset.x + 70, offset.y + 68);
                     if (enemiesKilled == previousHighScore) {
-                        font.draw(batch, "NEW HIGH SCORE!", 70, 98);
+                        font.draw(batch, "NEW HIGH SCORE!", offset.x + 70, offset.y + 98);
                     } else {
-                        font.draw(batch, "CURRENT HIGH SCORE is " + this.previousHighScore, 70, 98);
+                        font.draw(batch, "CURRENT HIGH SCORE is " + this.previousHighScore, offset.x + 70, offset.y + 98);
                     }
                 }
             }
