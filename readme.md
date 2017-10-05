@@ -1,13 +1,13 @@
 
-Goal:
+### Goal:
 Add more story to the prototype
 
-Ideas:
+### Ideas:
  * dialog with characters using portraits and text 
  * distinct levels with obvious challenges and defined solution
  * story line with characters, goal, environment.
 
-Storyline:
+### Storyline:
 The player (Vent) and their buddy (Patches) land their space ship on a remote planet, looking for more fuel so they can continue. The fuel is a crystal. They lans in a remote section of forest near a village, to get information on the location of fuel. When they land they get attacked. The player's first goal is to survive. After the attack the player's goal is to get to 
 the village. They must fight creatures to get there. 
 
@@ -21,7 +21,7 @@ The player must return to the ship with the fuel.
 
 If the player kills the baron, they can return to the village and gain closure.
 
-Todo tasks:
+### Todo tasks:
  * add dialog mode for images and text.
  * create character images
  * create dialog
