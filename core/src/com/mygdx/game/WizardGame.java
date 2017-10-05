@@ -34,6 +34,7 @@ import com.mygdx.game.core.Archer;
 import com.mygdx.game.core.Wizard;
 import com.mygdx.game.core.Eye;
 import com.mygdx.game.core.Damage;
+import com.mygdx.game.core.Level;
 
 
 public class WizardGame extends ApplicationAdapter {
@@ -149,6 +150,9 @@ public class WizardGame extends ApplicationAdapter {
     private List<String> abilities;
 
     private Vector2 cameraPos;
+    private List<Level> levels;
+    private int levelIndex;
+    private Level currentLevel;
 
     @Override
 	public void create () {
@@ -198,6 +202,19 @@ public class WizardGame extends ApplicationAdapter {
         abilities.add("dash");
         abilities.add("gun");
 
+        levels = new ArrayList<Level>();
+        levels.add(new Level("background.png", 2,0,0,0,0));
+        levels.add(new Level("background.png", 4,0,0,0,0));
+        levels.add(new Level("background.png", 6,0,0,0,0));
+        levels.add(new Level("background.png", 4,1,0,0,0));
+        levels.add(new Level("background.png", 6,2,0,0,0));
+        levels.add(new Level("background.png", 0,0,1,0,0));
+        levels.add(new Level("background.png", 0,0,0,2,0));
+        levels.add(new Level("background.png", 4,1,0,1,0));
+        levels.add(new Level("background.png", 6,0,0,0,2));
+        levels.add(new Level("background.png", 0,0,0,0,5));
+        levels.add(new Level("background.png", 6,1,1,1,1));
+
         FileHandle handle = Gdx.files.internal("mavenpro-regular.ttf");
         FreeTypeFontGenerator generator = new FreeTypeFontGenerator(handle);
         FreeTypeFontGenerator.FreeTypeFontParameter parameter = new FreeTypeFontGenerator.FreeTypeFontParameter();
@@ -246,6 +263,17 @@ public class WizardGame extends ApplicationAdapter {
         shootCooldown = -1;
         hasWon = false;
         blockCooldown = -1;
+        levelIndex = 0;
+        for (Level level : levels) {
+            level.reset();
+        }
+        currentLevel = levels.get(levelIndex);
+    }
+
+    private void loadLevel(Level level) {
+        if (!level.isLoaded()) {
+            level.load(this);
+        }
     }
 
     private Vector2 getRandomPosition() {
@@ -314,7 +342,7 @@ public class WizardGame extends ApplicationAdapter {
             // draw pointer
             batch.draw(selectionPointer, pointerPos.x  + offset.x, pointerPos.y + offset.y);
         } else {
-            batch.draw(background, 0, 0);
+            currentLevel.draw(batch);
             if (wizardLife > 0 && !hasWon) {
                 update();
                 if (dashTimer > 0) {
@@ -368,7 +396,6 @@ public class WizardGame extends ApplicationAdapter {
         }
 
 		batch.end();
-        // shapeRenderer.setProjectionMatrix(camera.combined);
         
         if (wizardLife > 0 && !isMenuShown) {
             shapeRenderer.begin(ShapeType.Filled);
@@ -521,6 +548,8 @@ public class WizardGame extends ApplicationAdapter {
             dashMovement.y = 0;
         }
 
+        currentLevel.update(this);
+
         List<Entity> collidingEnemies = getCollidingEnemies(playerRectangle, "player1");
         if (collidingEnemies.size() > 0) {
             hurtPlayer();
@@ -544,46 +573,19 @@ public class WizardGame extends ApplicationAdapter {
                 }
             }
         }
-        if (enemies.size() < 1 && started) {
-            level++;
-            switch (level) {
-                case 1:
-                    addWaveOfSkeletons(4, 1, 0, 0, 0);
-                    break;
-                case 2:
-                    addWaveOfSkeletons(0, 0, 0, 2, 0);
-                    break;
-                case 3:
-                    addWaveOfSkeletons(4, 1, 0, 0, 1);
-                    break;
-                case 4:
-                    addWaveOfSkeletons(0, 0, 1, 0, 0);
-                    break;
-                case 5:
-                    addWaveOfSkeletons(4, 1, 0, 1, 1);
-                    break;
-                case 6:
-                    addWaveOfSkeletons(8, 0, 0, 2, 2);
-                    break;
-                case 7:
-                    addWaveOfSkeletons(0, 0, 0, 0, 5);
-                    break;
-                case 8:
-                    addWaveOfSkeletons(4, 1, 1, 1, 1);
-                    break;
-                case 9:
-                    addWaveOfSkeletons(0, 2, 2, 2, 0);
-                    break;
-                case 10:
-                    hasWon = true;
-                    break;
+        if (currentLevel.isDone() && started) {
+            levelIndex++;
+            if (levelIndex >= levels.size()) {
+                levelIndex = 0;
+                hasWon = true;
+            } else {
+                loadLevel(levels.get(levelIndex));
             }
         }
         waitStart = waitStart - delta;
         if (waitStart < 0 && !started) {
             started = true;
-            addWaveOfSkeletons(4,0,0,0,0);
-            // addWaveOfSkeletons(numberOfSkeletons, numberOfArchers, numberOfWizards, numberOfEyes);
+            loadLevel(currentLevel);
         }
     }
 
@@ -869,7 +871,11 @@ public class WizardGame extends ApplicationAdapter {
         }
 	}
 
-    private void addWaveOfSkeletons(int numSkeletons, int numArchers, int numWizards,int numEyes, int numChargers) {
+    public boolean areEnemiesDead() {
+        return enemies.size() < 1;
+    }
+
+    public void addWaveOfSkeletons(int numSkeletons, int numArchers, int numWizards,int numEyes, int numChargers) {
         for (int i = 0; i < numSkeletons; i++) {
             addSkeleton();
         }
