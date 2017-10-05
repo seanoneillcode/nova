@@ -196,7 +196,7 @@ public class WizardGame extends ApplicationAdapter {
         abilities.add("dash");
         abilities.add("gun");
 
-        FileHandle handle = Gdx.files.internal("MavenPro-regular.ttf");
+        FileHandle handle = Gdx.files.internal("mavenpro-regular.ttf");
         FreeTypeFontGenerator generator = new FreeTypeFontGenerator(handle);
         FreeTypeFontGenerator.FreeTypeFontParameter parameter = new FreeTypeFontGenerator.FreeTypeFontParameter();
         parameter.size = 12;
