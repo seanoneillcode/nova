@@ -203,11 +203,11 @@ public class WizardGame extends ApplicationAdapter {
         abilities.add("gun");
 
         levels = new ArrayList<Level>();
-        levels.add(new ExploreLevel("background-ship.png", new Vector2(140,100), new Rectangle(0,100,32,32)));
+        levels.add(new ExploreLevel("background-ship.png", new Vector2(260,280), new Rectangle(0,170,32,32)));
         levels.add(new WaveLevel("background.png", new Vector2(224,100), 1,0,0,0,0));
-        levels.add(new WaveLevel("background.png", new Vector2(128,100), 2,0,0,0,0));
-        levels.add(new WaveLevel("background.png", new Vector2(128,100), 3,0,0,0,0));
-        levels.add(new ExploreLevel("background-other.png", new Vector2(128,100), new Rectangle(0,0,32,32)));
+        levels.add(new WaveLevel("background.png", null, 2,0,0,0,0));
+        levels.add(new WaveLevel("background.png", null, 3,0,0,0,0));
+        levels.add(new ExploreLevel("background-other.png", null, new Rectangle(0,0,32,32)));
         // levels.add(new WaveLevel("background.png", 4,0,0,0,0));
         // levels.add(new WaveLevel("background.png", 6,0,0,0,0));
         // levels.add(new WaveLevel("background.png", 4,1,0,0,0));
@@ -282,7 +282,12 @@ public class WizardGame extends ApplicationAdapter {
             currentLevel = levels.get(levelIndex);        
             if (!currentLevel.isLoaded()) {
                 currentLevel.load(this);
-                playerPosition = currentLevel.getStartPos().cpy();
+                Vector2 nextPos = currentLevel.getStartPos();
+                if (nextPos != null) {
+                    playerPosition = nextPos.cpy();
+                    camera.position.x = playerPosition.x;
+                    camera.position.y = playerPosition.y;
+                }
             }
         }
     }
