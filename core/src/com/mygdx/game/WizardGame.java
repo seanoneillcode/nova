@@ -35,8 +35,6 @@ import com.mygdx.game.core.Wizard;
 import com.mygdx.game.core.Eye;
 import com.mygdx.game.core.Damage;
 import com.mygdx.game.core.Level;
-import com.mygdx.game.core.WaveLevel;
-import com.mygdx.game.core.ExploreLevel;
 
 
 public class WizardGame extends ApplicationAdapter {
@@ -203,21 +201,14 @@ public class WizardGame extends ApplicationAdapter {
         abilities.add("gun");
 
         levels = new ArrayList<Level>();
-        levels.add(new ExploreLevel("background-ship.png", new Vector2(260,280), new Rectangle(0,170,32,32)));
-        levels.add(new WaveLevel("background.png", new Vector2(224,100), 1,0,0,0,0));
-        levels.add(new WaveLevel("background.png", null, 2,0,0,0,0));
-        levels.add(new WaveLevel("background.png", null, 3,0,0,0,0));
-        levels.add(new ExploreLevel("background-other.png", null, new Rectangle(0,0,32,32)));
-        // levels.add(new WaveLevel("background.png", 4,0,0,0,0));
-        // levels.add(new WaveLevel("background.png", 6,0,0,0,0));
-        // levels.add(new WaveLevel("background.png", 4,1,0,0,0));
-        // levels.add(new WaveLevel("background.png", 6,2,0,0,0));
-        // levels.add(new WaveLevel("background.png", 0,0,1,0,0));
-        // levels.add(new WaveLevel("background.png", 0,0,0,2,0));
-        // levels.add(new WaveLevel("background.png", 4,1,0,1,0));
-        // levels.add(new WaveLevel("background.png", 6,0,0,0,2));
-        // levels.add(new WaveLevel("background.png", 0,0,0,0,5));
-        // levels.add(new WaveLevel("background.png", 6,1,1,1,1));
+        levels.add(new Level.Builder("background-ship.png")
+            .startPos(new Vector2(260,260))
+            .goalRect(new Rectangle(0,170,32,32))
+            .build());
+        levels.add(new Level.Builder("background.png")
+            .startPos(new Vector2(224,100))
+            .skeletons(2)
+            .build());
 
         FileHandle handle = Gdx.files.internal("mavenpro-regular.ttf");
         FreeTypeFontGenerator generator = new FreeTypeFontGenerator(handle);
