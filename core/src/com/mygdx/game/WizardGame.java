@@ -115,6 +115,10 @@ public class WizardGame extends ApplicationAdapter {
     private int enemiesKilled = 0;
     private int level;
 
+    private Rectangle actionRect;
+    private boolean isAction;
+    private Vector2 actionOffset;
+
     Sound wizardDeathSound;
     Sound wizardShootSound;
     Sound enemyDeathSound;
@@ -187,6 +191,7 @@ public class WizardGame extends ApplicationAdapter {
         charger = new Texture("charger.png");
         badWizard = new Texture("wizard.png");
         playerPosition = getRandomPosition();
+        actionRect = new Rectangle(0,0,20,20);
 
         dashafter = new Sprite(new Texture("dash-after.png"));
         abilityMenu = new TextureRegion(new Texture("ability-select.png"));
@@ -371,6 +376,10 @@ public class WizardGame extends ApplicationAdapter {
                 if (blockTimer >= MAX_BLOCK_COOLDOWN * 0.5f) {
                     blockSprite.draw(batch);
                 }
+                if (isAction) {
+                    batch.draw(upWizard, actionRect.x, actionRect.y);
+                }
+
                 font.draw(batch, "H " + wizardLife, 200.0f + offset.x, 180.0f + offset.y);
                 font.draw(batch, "W " + (level + 1), 200f + offset.x, 168f + offset.y);
                 font.draw(batch, slotA, 12 + offset.x, 178 + offset.y);
@@ -520,6 +529,12 @@ public class WizardGame extends ApplicationAdapter {
             }
         }
 
+        if (isAction) {
+            actionRect.x = playerPosition.x + actionOffset.x;
+            actionRect.y = playerPosition.y + actionOffset.y;
+            // GET colliding characters and items
+        }
+
         if (blockTimer >= 0) {
             blockTimer = blockTimer - delta; 
         }
@@ -626,6 +641,23 @@ public class WizardGame extends ApplicationAdapter {
     private void createBlock(Vector2 offset) {
         blockTimer = MAX_BLOCK_COOLDOWN;
         blockOffset = offset.cpy();
+    }
+
+    private void action() {
+        Vector2 offset = new Vector2();
+        if (lastDirection.x < 0) {
+            offset = offset.add(-16,0);
+        }
+        if (lastDirection.x > 0) {
+            offset = offset.add(16,0);
+        }
+        if (lastDirection.y < 0) {
+            offset = offset.add(0, 16);
+        }
+        if (lastDirection.y > 0) {
+            offset = offset.add(0, -16);
+        }
+        actionOffset = offset.cpy();
     }
 
     private void useSlot(String slot) {
@@ -842,6 +874,12 @@ public class WizardGame extends ApplicationAdapter {
             }
             if (Gdx.input.isKeyPressed(Input.Keys.D)) {
                 useSlot(slotB);
+            }
+            if (Gdx.input.isKeyPressed(Input.Keys.E)) {
+                action();
+                isAction = true;
+            } else {
+                isAction = false;
             }
 
         }
