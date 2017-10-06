@@ -19,14 +19,17 @@ public class WaveLevel implements Level {
     private int numWiz;
     private int numEye;
     private int numChar;
+    private Vector2 startPos;
 
-    public WaveLevel(String backgroundImage, int numSkel, int numArch, int numWiz, int numEye, int numChar) {
+    public WaveLevel(String backgroundImage, Vector2 startPos, 
+        int numSkel, int numArch, int numWiz, int numEye, int numChar) {
         this.backgroundImage = backgroundImage;
         this.numSkel = numSkel;
         this.numArch = numArch;
         this.numWiz = numWiz;
         this.numEye = numEye;
         this.numChar = numChar;
+        this.startPos = startPos;
         reset();
     }
 
@@ -58,5 +61,9 @@ public class WaveLevel implements Level {
         if (background != null) {
             batch.draw(background, 0, 0);
         }
+    }
+
+    public Vector2 getStartPos() {
+        return startPos;
     }
 }
