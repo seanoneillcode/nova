@@ -382,7 +382,7 @@ public class WizardGame extends ApplicationAdapter {
                 }
 
 
-                font.draw(batch, "p" + playerPosition.x + "," + playerPosition.y
+                font.draw(batch, "p" + (int)playerPosition.x + "," + (int)playerPosition.y
                     , 100.0f + offset.x, 180.0f + offset.y);
 
                 font.draw(batch, "H " + wizardLife, 200.0f + offset.x, 180.0f + offset.y);
