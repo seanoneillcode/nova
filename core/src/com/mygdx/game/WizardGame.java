@@ -207,11 +207,12 @@ public class WizardGame extends ApplicationAdapter {
 
         levels = new ArrayList<Level>();
         levels.add(new Level.Builder("background-ship.png")
-            .startPos(new Vector2(260,260))
-            .goalRect(new Rectangle(0,170,32,32))
+            .startPos(new Vector2(60,60))
+            .goalRect(new Rectangle(200,50,24,80))
+            .boundry(new Rectangle(20,40,184,50))
             .build());
         levels.add(new Level.Builder("background.png")
-            .startPos(new Vector2(224,100))
+            .startPos(new Vector2(0,100))
             .skeletons(2)
             .build());
 
@@ -469,17 +470,20 @@ public class WizardGame extends ApplicationAdapter {
         dashMovement.y = dashMovement.y * DASH_FRICTION;
         playerPosition.add(addSpeed);
 
-        if (playerPosition.x < 0) {
-            playerPosition.x = 0;
-        }
-        if (playerPosition.x > screenWidth) {
-            playerPosition.x = screenWidth;
-        }
-        if (playerPosition.y < 0) {
-            playerPosition.y = 0;
-        }
-        if (playerPosition.y > screenHeight) {
-            playerPosition.y = screenHeight;
+        if (currentLevel != null) {
+            Rectangle boundry = currentLevel.boundry;
+            if (playerPosition.x < boundry.x) {
+                playerPosition.x = boundry.x;
+            }
+            if (playerPosition.x > boundry.x + boundry.width) {
+                playerPosition.x = boundry.x + boundry.width;
+            }
+            if (playerPosition.y < boundry.y) {
+                playerPosition.y = boundry.y;
+            }
+            if (playerPosition.y > boundry.y + boundry.height) {
+                playerPosition.y = boundry.y + boundry.height;
+            }
         }
         Rectangle playerRectangle = getPlayerRect();
 

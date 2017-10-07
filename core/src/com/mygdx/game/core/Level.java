@@ -21,6 +21,7 @@ public class Level {
     public Integer wizards;
     public Integer eyes;
     public Integer chargers;
+    public Rectangle boundry;
 
     public Level(String backgroundImage) {
         this.backgroundImage = backgroundImage;
@@ -30,6 +31,9 @@ public class Level {
 
     public void load(WizardGame wizardGame) {
         background = new TextureRegion(new Texture(this.backgroundImage));
+        if (boundry == null) {
+            boundry = new Rectangle(0,0,background.getRegionWidth(), background.getRegionHeight());
+        }
         wizardGame.addWaveOfSkeletons(skeletons,archers,wizards,eyes,chargers);
         isLoaded = true;
     }
@@ -77,6 +81,7 @@ public class Level {
         Integer wizards = 0;
         Integer eyes = 0;
         Integer chargers = 0;
+        Rectangle boundry;
 
         public Builder(String backgroundImage) {
             this.backgroundImage = backgroundImage;
@@ -117,6 +122,11 @@ public class Level {
             return this;
         }
 
+        public Builder boundry(Rectangle boundry) {
+            this.boundry = boundry;
+            return this;
+        }
+
         public Level build() {
             Level level = new Level(this.backgroundImage);
             if (goalRect != null) {
@@ -124,6 +134,9 @@ public class Level {
             }
             if (startPos != null) {
                 level.startPos = this.startPos;
+            }
+            if (boundry != null) {
+                level.boundry = this.boundry;
             }
             level.skeletons = this.skeletons;
             level.archers = this.archers;
