@@ -207,9 +207,9 @@ public class WizardGame extends ApplicationAdapter {
 
         levels = new ArrayList<Level>();
         levels.add(new Level.Builder("background-ship.png")
-            .startPos(new Vector2(60,60))
-            .goalRect(new Rectangle(200,50,24,80))
-            .boundry(new Rectangle(20,40,184,50))
+            .startPos(new Vector2(195,151))
+            .goalRect(new Rectangle(304,90,24,80))
+            .boundry(new Rectangle(120,90,310,64))
             .build());
         levels.add(new Level.Builder("background.png")
             .startPos(new Vector2(0,100))
@@ -380,6 +380,10 @@ public class WizardGame extends ApplicationAdapter {
                 if (isAction) {
                     batch.draw(upWizard, actionRect.x, actionRect.y);
                 }
+
+
+                font.draw(batch, "p" + playerPosition.x + "," + playerPosition.y
+                    , 100.0f + offset.x, 180.0f + offset.y);
 
                 font.draw(batch, "H " + wizardLife, 200.0f + offset.x, 180.0f + offset.y);
                 font.draw(batch, "W " + (level + 1), 200f + offset.x, 168f + offset.y);
