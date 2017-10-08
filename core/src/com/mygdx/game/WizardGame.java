@@ -159,8 +159,9 @@ public class WizardGame extends ApplicationAdapter {
     private int levelIndex;
     private Level currentLevel;
 
-    private Conversation conversation;
+    private List<Conversation> conversations;
     private Conversation currentConversation;
+    private int conversationIndex;
     private boolean dialogLock = false;
     private boolean dialogActive = false;
     private boolean keyDLock = false;
@@ -222,7 +223,50 @@ public class WizardGame extends ApplicationAdapter {
         levels.add(new Level.Builder("background.png")
             .startPos(new Vector2(0,100))
             .skeletons(2)
+            .boundry(new Rectangle(0,0,245,187))
             .build());
+        levels.add(new Level.Builder("background.png")
+            .skeletons(4)
+            .boundry(new Rectangle(0,0,245,187))
+            .build());
+        levels.add(new Level.Builder("background.png")
+            .skeletons(4)
+            .archers(2)
+            .boundry(new Rectangle(0,0,245,187))
+            .build());
+        levels.add(new Level.Builder("background.png")
+            .eyes(2)
+            .boundry(new Rectangle(0,0,245,187))
+            .build());
+        levels.add(new Level.Builder("background-other.png")
+            .goalRect(new Rectangle(210,25,50,125))
+            .boundry(new Rectangle(0,0,245,187))
+            .build());
+        levels.add(new Level.Builder("background.png")
+            .startPos(new Vector2(0,100))
+            .boundry(new Rectangle(0,0,245,187))
+            .build());
+        levels.add(new Level.Builder("background.png")
+            .boundry(new Rectangle(0,0,245,187))
+            .archers(2)
+            .skeletons(4)
+            .chargers(2)
+            .build());
+        levels.add(new Level.Builder("background.png")
+            .boundry(new Rectangle(0,0,245,187))
+            .eyes(2)
+            .skeletons(6)
+            .build());
+        levels.add(new Level.Builder("background.png")
+            .boundry(new Rectangle(0,0,245,187))
+            .chargers(5)
+            .build());
+        levels.add(new Level.Builder("background.png")
+            .boundry(new Rectangle(0,0,245,187))
+            .wizards(1)
+            .build());
+
+
 
         FileHandle handle = Gdx.files.internal("mavenpro-regular.ttf");
         FreeTypeFontGenerator generator = new FreeTypeFontGenerator(handle);
@@ -249,29 +293,88 @@ public class WizardGame extends ApplicationAdapter {
         cameraPos = new Vector2();
 
         // max 210 cahracters safely
-        conversation = new Conversation.Builder()
+        conversations = new ArrayList<Conversation>();
+        conversations.add(new Conversation.Builder()
             .dialog(
-                new Dialog("Bones! Can you hear me ?", 
+                new Dialog("Zapp! Can you hear me ?", 
                     new TextureRegion(new Texture("patches-portrait.png")), true)
             )
             .dialog(
-                new Dialog("No... Try again", 
+                new Dialog("Yeah. Where is the fuel we need?", 
+                    new TextureRegion(new Texture("bravo-portrait.png")), false)
+            )
+            .dialog(
+                new Dialog("To the EAST. I'm picking up lifeforms, so be careful.", 
+                    new TextureRegion(new Texture("patches-portrait.png")), true)
+            )
+            .dialog(
+                new Dialog("There's no need to worry about me.", 
+                    new TextureRegion(new Texture("bravo-portrait.png")), false)
+            )
+            .dialog(
+                new Dialog("Don't flatter yourself, the only way off this moon is crystal fuel.", 
+                    new TextureRegion(new Texture("patches-portrait.png")), true)
+            )
+            .dialog(
+                new Dialog("I'll try not to die so...", 
+                    new TextureRegion(new Texture("bravo-portrait.png")), false)
+            )
+            .build());
+
+        conversations.add(new Conversation.Builder()
+            .dialog(
+                new Dialog("Oh, and Bravo", 
+                    new TextureRegion(new Texture("patches-portrait.png")), true)
+            )
+            .dialog(
+                new Dialog("What..!?", 
+                    new TextureRegion(new Texture("bravo-portrait.png")), false)
+            )
+            .dialog(
+                new Dialog("Before you head out, test your sword and booster (press 'D' or 'S')", 
+                    new TextureRegion(new Texture("patches-portrait.png")), true)
+            )
+            .build());
+
+        conversations.add(new Conversation.Builder()
+            .dialog(
+                new Dialog("What's this?", 
+                    new TextureRegion(new Texture("bravo-portrait.png")), false)
+            )
+            .dialog(
+                new Dialog("Looks like a disrupter. Open your inventory and select 'gun' to equip it", 
+                    new TextureRegion(new Texture("patches-portrait.png")), true)
+            )
+            .dialog(
+                new Dialog("Looks handy for those hard to reach creatures.", 
+                    new TextureRegion(new Texture("bravo-portrait.png")), false)
+            )
+            .dialog(
+                new Dialog("Where to next?", 
+                    new TextureRegion(new Texture("bravo-portrait.png")), false)
+            )
+            .dialog(
+                new Dialog("Keep going EAST", 
+                    new TextureRegion(new Texture("patches-portrait.png")), true)
+            )
+            .build());
+
+        conversations.add(new Conversation.Builder()
+            .dialog(
+                new Dialog("Who's there?", 
+                    new TextureRegion(new Texture("bravo-portrait.png")), true)
+            )
+            .dialog(
+                new Dialog("The Antagonist!!!!", 
                     new TextureRegion(new Texture("patches-portrait.png")), false)
             )
             .dialog(
-                new Dialog("Bones! How about now?", 
-                    new TextureRegion(new Texture("patches-portrait.png")), true)
-            )
-            .dialog(
-                new Dialog("Loud and clear", 
+                new Dialog("Prepare to die...", 
                     new TextureRegion(new Texture("patches-portrait.png")), false)
             )
-            .dialog(
-                new Dialog("Try pressing 'D' to use your sword", 
-                    new TextureRegion(new Texture("patches-portrait.png")), true)
-            )
-            .build();
-        currentConversation = conversation;
+            .build());
+
+
 
         resetGame();
 	}
@@ -302,8 +405,9 @@ public class WizardGame extends ApplicationAdapter {
             level.reset();
         }
         dialogActive = false;
-        conversation.reset();
-        currentConversation = conversation;
+        conversationIndex = 0;
+        currentConversation = conversations.get(conversationIndex);
+        currentConversation.reset();
     }
 
     private void loadNextLevel() {
@@ -663,6 +767,42 @@ public class WizardGame extends ApplicationAdapter {
             started = true;
             loadNextLevel();
         }
+        checkForConversations();
+    }
+
+    private void checkForConversations() {
+        Rectangle playerRectangle = getPlayerRect();
+        if (levelIndex == 0 && conversationIndex == 0) {
+            Rectangle startConvo = new Rectangle(190,115,50,30);
+            if (playerRectangle.overlaps(startConvo)) {
+                dialogActive = true;
+            }
+        }
+        if (levelIndex == 0 && conversationIndex == 1) {
+            Rectangle swordConvo = new Rectangle(250,90,50,64);
+            if (playerRectangle.overlaps(swordConvo)) {
+                dialogActive = true;
+            }
+        }
+        if (levelIndex == 5 && conversationIndex == 2) {
+            Rectangle swordConvo = new Rectangle(0,0,250,200);
+            if (playerRectangle.overlaps(swordConvo)) {
+                dialogActive = true;
+            }
+        }
+        if (levelIndex == 5 && conversationIndex == 2) {
+            Rectangle swordConvo = new Rectangle(0,0,250,200);
+            if (playerRectangle.overlaps(swordConvo)) {
+                dialogActive = true;
+            }
+        }
+        if (levelIndex == 11 && conversationIndex == 3) {
+            Rectangle swordConvo = new Rectangle(0,0,250,200);
+            if (playerRectangle.overlaps(swordConvo)) {
+                dialogActive = true;
+            }
+        }
+
     }
 
     private List<Entity> getCollidingEnemies(Rectangle rect, String owner) {
@@ -973,6 +1113,11 @@ public class WizardGame extends ApplicationAdapter {
                 if (currentConversation.isFinished()) {
                     dialogActive = false;
                     currentConversation.reset();
+                    conversationIndex++;
+                    if (conversationIndex > conversations.size() - 1) {
+                        conversationIndex = 0;
+                    }
+                    currentConversation = conversations.get(conversationIndex);
                 } else {
                     currentConversation.handleInput();
                 }
