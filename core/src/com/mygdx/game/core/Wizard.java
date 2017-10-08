@@ -53,6 +53,15 @@ public class Wizard extends Enemy {
         }    
     }
 
+    public void takeDamage(int damage) {
+        health = health - 1;
+        float xpos = MathUtils.random(0, 256);
+        float ypos = MathUtils.random(0, 180);
+        Vector2 pos = new Vector2(xpos,ypos);
+        goalDirection = pos.cpy();
+        sprite.setPosition(goalDirection.x, goalDirection.y);
+    }
+
     private void pickNewLocation(Vector2 player) {
         // Vector2 pos = new Vector2(MathUtils.random(16, 224), MathUtils.random(16, 224));
         float distance = player.dst2(new Vector2(sprite.getX(),sprite.getY()));

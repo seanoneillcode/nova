@@ -89,7 +89,7 @@ public class WizardGame extends ApplicationAdapter {
     private static final float MAX_SHOOT_COOLDOWN = 0.8f;
     private static final float MAX_BLOCK_COOLDOWN = 0.5f;
     private static final float HURT_COOL_DOWN = 1f;
-    private static final float WAIT_START_COOLDOWN = 2.0f;
+    private static final float WAIT_START_COOLDOWN = 3.0f;
     private static final float CHARGER_SPEED = 80f;
     private static final float DAMAGE_TTL = 1.0f;
     private BitmapFont font;
@@ -215,55 +215,77 @@ public class WizardGame extends ApplicationAdapter {
         abilities.add("gun");
 
         levels = new ArrayList<Level>();
+        // 0
         levels.add(new Level.Builder("background-ship.png")
             .startPos(new Vector2(195,151))
             .goalRect(new Rectangle(304,90,24,80))
             .boundry(new Rectangle(120,90,310,64))
             .build());
-        levels.add(new Level.Builder("background.png")
-            .startPos(new Vector2(0,100))
+        // 1
+        levels.add(new Level.Builder("canyon-background.png")
+            .startPos(new Vector2(20,186))
             .skeletons(2)
-            .boundry(new Rectangle(0,0,245,187))
+            .boundry(new Rectangle(20,60,260,210))
             .build());
-        levels.add(new Level.Builder("background.png")
+        // 2
+        levels.add(new Level.Builder("canyon-background.png")
             .skeletons(4)
-            .boundry(new Rectangle(0,0,245,187))
+            .boundry(new Rectangle(20,60,260,210))
             .build());
-        levels.add(new Level.Builder("background.png")
+        // 3
+        levels.add(new Level.Builder("canyon-background.png")
             .skeletons(4)
             .archers(2)
-            .boundry(new Rectangle(0,0,245,187))
+            .boundry(new Rectangle(20,60,260,210))
             .build());
-        levels.add(new Level.Builder("background.png")
+        // 4
+        levels.add(new Level.Builder("canyon-background.png")
             .eyes(2)
-            .boundry(new Rectangle(0,0,245,187))
+            .boundry(new Rectangle(20,60,260,210))
             .build());
-        levels.add(new Level.Builder("background-other.png")
-            .goalRect(new Rectangle(210,25,50,125))
-            .boundry(new Rectangle(0,0,245,187))
+        // 5
+        levels.add(new Level.Builder("canyon-background.png")
+            .goalRect(new Rectangle(250,125,50,105))
+            .boundry(new Rectangle(20,60,260,210))
             .build());
+        // 6
         levels.add(new Level.Builder("background.png")
             .startPos(new Vector2(0,100))
-            .boundry(new Rectangle(0,0,245,187))
+            .goalRect(new Rectangle(117,119,30,30))
+            .boundry(new Rectangle(0,0,270,210))
             .build());
+        // 7
         levels.add(new Level.Builder("background.png")
-            .boundry(new Rectangle(0,0,245,187))
+            .boundry(new Rectangle(0,0,270,210))
             .archers(2)
             .skeletons(4)
             .chargers(2)
             .build());
+        // 8
         levels.add(new Level.Builder("background.png")
-            .boundry(new Rectangle(0,0,245,187))
+            .boundry(new Rectangle(0,0,270,210))
             .eyes(2)
             .skeletons(6)
             .build());
+        // 9
         levels.add(new Level.Builder("background.png")
-            .boundry(new Rectangle(0,0,245,187))
+            .boundry(new Rectangle(0,0,270,210))
             .chargers(5)
             .build());
+        // 10
         levels.add(new Level.Builder("background.png")
-            .boundry(new Rectangle(0,0,245,187))
+            .goalRect(new Rectangle(117,119,30,30))
+            .boundry(new Rectangle(0,0,270,210))
+            .build());
+        // 11
+        levels.add(new Level.Builder("background.png")
+            .boundry(new Rectangle(0,0,270,210))
             .wizards(1)
+            .build());
+        // 12
+        levels.add(new Level.Builder("background.png")
+            .goalRect(new Rectangle(30,0,30,330))
+            .boundry(new Rectangle(0,0,270,210))
             .build());
 
 
@@ -317,7 +339,7 @@ public class WizardGame extends ApplicationAdapter {
             )
             .dialog(
                 new Dialog("I'll try not to die so...", 
-                    new TextureRegion(new Texture("bravo-portrait.png")), false)
+                    new TextureRegion(new Texture("bravo-portrait-sad.png")), false)
             )
             .build());
 
@@ -328,7 +350,7 @@ public class WizardGame extends ApplicationAdapter {
             )
             .dialog(
                 new Dialog("What..!?", 
-                    new TextureRegion(new Texture("bravo-portrait.png")), false)
+                    new TextureRegion(new Texture("bravo-portrait-sad.png")), false)
             )
             .dialog(
                 new Dialog("Before you head out, test your sword and booster (press 'D' or 'S')", 
@@ -342,7 +364,7 @@ public class WizardGame extends ApplicationAdapter {
                     new TextureRegion(new Texture("bravo-portrait.png")), false)
             )
             .dialog(
-                new Dialog("Looks like a disrupter. Open your inventory and select 'gun' to equip it", 
+                new Dialog("Looks like a disrupter. (Press 'Enter' and select 'gun' to equip it)", 
                     new TextureRegion(new Texture("patches-portrait.png")), true)
             )
             .dialog(
@@ -354,26 +376,78 @@ public class WizardGame extends ApplicationAdapter {
                     new TextureRegion(new Texture("bravo-portrait.png")), false)
             )
             .dialog(
-                new Dialog("Keep going EAST", 
+                new Dialog("Keep going EAST, through that green gate.", 
                     new TextureRegion(new Texture("patches-portrait.png")), true)
             )
             .build());
 
         conversations.add(new Conversation.Builder()
             .dialog(
-                new Dialog("Who's there?", 
-                    new TextureRegion(new Texture("bravo-portrait.png")), true)
-            )
-            .dialog(
-                new Dialog("The Antagonist!!!!", 
-                    new TextureRegion(new Texture("patches-portrait.png")), false)
-            )
-            .dialog(
-                new Dialog("Prepare to die...", 
-                    new TextureRegion(new Texture("patches-portrait.png")), false)
+                new Dialog("There's the crystal we need", 
+                    new TextureRegion(new Texture("patches-portrait.png")), true)
             )
             .build());
 
+        conversations.add(new Conversation.Builder()
+            .dialog(
+                new Dialog("Who's this, stealing my crystal", 
+                    new TextureRegion(new Texture("bad-portrait.png")), false)
+            )
+            .dialog(
+                new Dialog("Me, Bravo Starcaster", 
+                    new TextureRegion(new Texture("bravo-portrait.png")), true)
+            )
+            .dialog(
+                new Dialog("Well, you're an honest thief. I'll make sure the authorities know", 
+                    new TextureRegion(new Texture("bad-portrait.png")), false)
+            )
+            .dialog(
+                new Dialog("Damn it! I mean it's Dave... ", 
+                    new TextureRegion(new Texture("bravo-portrait-sad.png")), true)
+            )
+            .dialog(
+                new Dialog("Quite! Leave or die", 
+                    new TextureRegion(new Texture("bad-portrait.png")), false)
+            )
+            .dialog(
+                new Dialog("We need the crystal to leave", 
+                    new TextureRegion(new Texture("bravo-portrait-sad.png")), true)
+            )
+            .dialog(
+                new Dialog("I guess it's your time to die then", 
+                    new TextureRegion(new Texture("bad-portrait.png")), false)
+            )
+            .build());
+
+        conversations.add(new Conversation.Builder()
+            .dialog(
+                new Dialog("Well everyone I cared about is dead.", 
+                    new TextureRegion(new Texture("bad-portrait.png")), false)
+            )
+            .dialog(
+                new Dialog("...Sorry", 
+                    new TextureRegion(new Texture("bravo-portrait-sad.png")), true)
+            )
+            .dialog(
+                new Dialog("You will be, you still need to get past me.", 
+                    new TextureRegion(new Texture("bad-portrait.png")), false)
+            )
+            .build());
+
+        conversations.add(new Conversation.Builder()
+                .dialog(
+                    new Dialog("Warm up the engines Patches, it's time to escape this mess", 
+                        new TextureRegion(new Texture("bravo-portrait.png")), false)
+                )
+                .dialog(
+                    new Dialog("Bravo.... we are the mess...", 
+                        new TextureRegion(new Texture("patches-portrait.png")), true)
+                )
+                .dialog(
+                    new Dialog("Well then. Let's cause the next one.", 
+                        new TextureRegion(new Texture("bravo-portrait-sad.png")), false)
+                )
+                .build());
 
 
         resetGame();
@@ -522,8 +596,8 @@ public class WizardGame extends ApplicationAdapter {
                 }
 
 
-                font.draw(batch, "p" + (int)playerPosition.x + "," + (int)playerPosition.y
-                    , 100.0f + offset.x, 180.0f + offset.y);
+                // font.draw(batch, "p" + (int)playerPosition.x + "," + (int)playerPosition.y
+                //     , 100.0f + offset.x, 180.0f + offset.y);
 
                 font.draw(batch, "H " + wizardLife, 200.0f + offset.x, 180.0f + offset.y);
                 font.draw(batch, "W " + (level + 1), 200f + offset.x, 168f + offset.y);
@@ -532,10 +606,8 @@ public class WizardGame extends ApplicationAdapter {
 
                 if (!started) {
                     font.draw(batch, "starting in " + ((int)waitStart), offset.x + 62, offset.y + 150);
-                    font.draw(batch, "SURVIVE 10 WAVES OF ENEMIES TO WIN", offset.x + 10, offset.y + 120);
-                    font.draw(batch, "press 'enter' to changes slots", offset.x + 42, offset.y + 80);
-                    font.draw(batch, "press 's' to use slot A", offset.x + 42, offset.y + 45);
-                    font.draw(batch, "press 'd' to use slot B", offset.x + 42, offset.y + 25);
+                    font.draw(batch, "press arrow keys to move", offset.x + 42, offset.y + 45);
+                    font.draw(batch, "press 'd' to interact", offset.x + 42, offset.y + 25);
                 }
             } else {
                 if (dialogActive) {
@@ -553,17 +625,11 @@ public class WizardGame extends ApplicationAdapter {
                     batch.draw(currentDialog.getImage(), offset.x + 10 + portraitOffset.x, offset.y + 90);
                 } else {
                     if (hasWon) {
-                        font.draw(batch, "YOU HAVE KILLED TO SURVIVE", offset.x + 10, offset.y + 158);
-                        font.draw(batch, "PRESS SPACE TO PLAY AGAIN", offset.x + 30, offset.y + 68);
+                        font.draw(batch, "The End. Thanks for playing!", offset.x + 30, offset.y + 68);
                     } else {
-                        font.draw(batch, "YOU RAN OUT OF Health", offset.x + 80, offset.y + 158);
-                        font.draw(batch, "YOU DESTROYED  " + enemiesKilled + "  ENEMIES", offset.x + 70, offset.y + 128);
+                        font.draw(batch, "YOU RAN OUT OF HEALTH", offset.x + 80, offset.y + 158);
+                        font.draw(batch, "YOU DESTROYED  " + enemiesKilled + "  FRIENDS", offset.x + 70, offset.y + 128);
                         font.draw(batch, "PRESS SPACE TO PLAY AGAIN", offset.x + 70, offset.y + 68);
-                        if (enemiesKilled == previousHighScore) {
-                            font.draw(batch, "NEW HIGH SCORE!", offset.x + 70, offset.y + 98);
-                        } else {
-                            font.draw(batch, "CURRENT HIGH SCORE is " + this.previousHighScore, offset.x + 70, offset.y + 98);
-                        }
                     }                
                 }
             }
@@ -773,7 +839,7 @@ public class WizardGame extends ApplicationAdapter {
     private void checkForConversations() {
         Rectangle playerRectangle = getPlayerRect();
         if (levelIndex == 0 && conversationIndex == 0) {
-            Rectangle startConvo = new Rectangle(190,115,50,30);
+            Rectangle startConvo = new Rectangle(100,100,250,230);
             if (playerRectangle.overlaps(startConvo)) {
                 dialogActive = true;
             }
@@ -785,19 +851,31 @@ public class WizardGame extends ApplicationAdapter {
             }
         }
         if (levelIndex == 5 && conversationIndex == 2) {
-            Rectangle swordConvo = new Rectangle(0,0,250,200);
+            Rectangle swordConvo = new Rectangle(0,0,350,350);
             if (playerRectangle.overlaps(swordConvo)) {
                 dialogActive = true;
             }
         }
-        if (levelIndex == 5 && conversationIndex == 2) {
-            Rectangle swordConvo = new Rectangle(0,0,250,200);
+        if (levelIndex == 6 && conversationIndex == 3) {
+            Rectangle swordConvo = new Rectangle(40,0,50,350);
             if (playerRectangle.overlaps(swordConvo)) {
                 dialogActive = true;
             }
         }
-        if (levelIndex == 11 && conversationIndex == 3) {
-            Rectangle swordConvo = new Rectangle(0,0,250,200);
+        if (levelIndex == 6 && conversationIndex == 4) {
+            Rectangle swordConvo = new Rectangle(60,0,50,350);
+            if (playerRectangle.overlaps(swordConvo)) {
+                dialogActive = true;
+            }
+        }
+        if (levelIndex == 10 && conversationIndex == 5) {
+            Rectangle swordConvo = new Rectangle(0,0,350,350);
+            if (playerRectangle.overlaps(swordConvo)) {
+                dialogActive = true;
+            }
+        }
+        if (levelIndex == 12 && conversationIndex == 6) {
+            Rectangle swordConvo = new Rectangle(0,0,350,350);
             if (playerRectangle.overlaps(swordConvo)) {
                 dialogActive = true;
             }
@@ -1165,7 +1243,7 @@ public class WizardGame extends ApplicationAdapter {
     }
 
     private void addWizardEnemy() {
-        Wizard e = new Wizard(badWizard, getRandomEdge(), 1, WIZARD_SPEED, "enemy", this);
+        Wizard e = new Wizard(badWizard, getRandomEdge(), 3, WIZARD_SPEED, "enemy", this);
         enemies.add(e);
     }
 

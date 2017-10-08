@@ -22,14 +22,15 @@ The player must return to the ship with the fuel.
 If the player kills the baron, they can return to the village and gain closure.
 
 ### Todo tasks:
- * add dialog mode for images and text.
- * create character images
+ * DONE - add dialog mode for images and text.
+ * DONE - create character images
  * DONE - create dialog
  * DONE - create levels - with defined goals and setup, background images too
  * DONE - add moving camera 
- * create ship in forest level - image
- * add npc boxes to start dialogs
- * add ship image and collision code for it
-
+ * DONE - create ship in forest level - image
+ * DONE - add ship image and collision code for it
+ * baron in room 2 - convo with him, conflict and goal
+ * baron in room 3 as boss fight wizard modify extra lives and gun evasion
+ * DONE draw level 2 - out side area with gate to right
 
 
