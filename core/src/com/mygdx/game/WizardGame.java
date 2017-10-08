@@ -36,6 +36,7 @@ import com.mygdx.game.core.Eye;
 import com.mygdx.game.core.Damage;
 import com.mygdx.game.core.Level;
 import com.mygdx.game.core.Dialog;
+import com.mygdx.game.core.Conversation;
 
 
 public class WizardGame extends ApplicationAdapter {
@@ -158,9 +159,11 @@ public class WizardGame extends ApplicationAdapter {
     private int levelIndex;
     private Level currentLevel;
 
-    private Dialog dialog;
+    private Conversation conversation;
+    private Conversation currentConversation;
     private boolean dialogLock = false;
     private boolean dialogActive = false;
+    private boolean keyDLock = false;
 
     @Override
 	public void create () {
@@ -245,7 +248,30 @@ public class WizardGame extends ApplicationAdapter {
         
         cameraPos = new Vector2();
 
-        dialog = new Dialog("This is a test, a magical test of shapes and figure. Only time will tell if it works");
+        // max 210 cahracters safely
+        conversation = new Conversation.Builder()
+            .dialog(
+                new Dialog("Bones! Can you hear me ?", 
+                    new TextureRegion(new Texture("patches-portrait.png")), true)
+            )
+            .dialog(
+                new Dialog("No... Try again", 
+                    new TextureRegion(new Texture("patches-portrait.png")), false)
+            )
+            .dialog(
+                new Dialog("Bones! How about now?", 
+                    new TextureRegion(new Texture("patches-portrait.png")), true)
+            )
+            .dialog(
+                new Dialog("Loud and clear", 
+                    new TextureRegion(new Texture("patches-portrait.png")), false)
+            )
+            .dialog(
+                new Dialog("Try pressing 'D' to use your sword", 
+                    new TextureRegion(new Texture("patches-portrait.png")), true)
+            )
+            .build();
+        currentConversation = conversation;
 
         resetGame();
 	}
@@ -276,6 +302,8 @@ public class WizardGame extends ApplicationAdapter {
             level.reset();
         }
         dialogActive = false;
+        conversation.reset();
+        currentConversation = conversation;
     }
 
     private void loadNextLevel() {
@@ -411,8 +439,14 @@ public class WizardGame extends ApplicationAdapter {
                     for (Entity e : enemies) {
                         e.draw(batch);
                     }
-                    dialog.update();
-                    font.draw(batch, dialog.getLine(), offset.x + 10, offset.y + 80);
+                    currentConversation.update();
+                    Dialog currentDialog = currentConversation.getCurrentDialog();
+                    font.draw(batch, currentDialog.getLine(), offset.x + 10, offset.y + 80);
+                    Vector2 portraitOffset = new Vector2();
+                    if (!currentDialog.isLeft()) {
+                        portraitOffset = new Vector2(160, 0);
+                    }
+                    batch.draw(currentDialog.getImage(), offset.x + 10 + portraitOffset.x, offset.y + 90);
                 } else {
                     if (hasWon) {
                         font.draw(batch, "YOU HAVE KILLED TO SURVIVE", offset.x + 10, offset.y + 158);
@@ -897,7 +931,7 @@ public class WizardGame extends ApplicationAdapter {
             if (Gdx.input.isKeyPressed(Input.Keys.S)) {
                 useSlot(slotA); 
             }
-            if (Gdx.input.isKeyPressed(Input.Keys.D)) {
+            if (Gdx.input.isKeyPressed(Input.Keys.D) && !keyDLock) {
                 useSlot(slotB);
             }
             if (Gdx.input.isKeyPressed(Input.Keys.E)) {
@@ -929,16 +963,24 @@ public class WizardGame extends ApplicationAdapter {
         if (Gdx.input.isKeyPressed(Input.Keys.F)) {
             if (!dialogLock) {
                 dialogLock = true;
-                if (dialogActive) {
-                    dialogActive = false;
-                    dialog.reset();
-                } else {
-                    dialogActive = true;
-                }
+                dialogActive = true;
             }
         } else {
             dialogLock = false;
         }        
+        if (dialogActive && Gdx.input.isKeyPressed(Input.Keys.D)) {
+            if (!keyDLock) {
+                if (currentConversation.isFinished()) {
+                    dialogActive = false;
+                    currentConversation.reset();
+                } else {
+                    currentConversation.handleInput();
+                }
+                keyDLock = true;
+            }
+        } else {
+            keyDLock = false;
+        }
 
         if (Gdx.input.isKeyPressed(Input.Keys.H)) {
             if (!fullscreenLock) {
