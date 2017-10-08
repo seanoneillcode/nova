@@ -8,7 +8,7 @@ Add more story to the prototype
  * story line with characters, goal, environment.
 
 ### Storyline:
-The player (Vent) and their buddy (Patches) land their space ship on a remote planet, looking for more fuel so they can continue. The fuel is a crystal. They land in a remote section of forest near a village, to get information on the location of fuel. When they land they get attacked. The player's first goal is to survive. After the attack the player's goal is to get to 
+The player (Bones) and their buddy (Patches) land their space ship on a remote planet, looking for more fuel so they can continue. The fuel is a crystal. They land in a remote section of forest near a village, to get information on the location of fuel. When they land they get attacked. The player's first goal is to survive. After the attack the player's goal is to get to 
 the village. They must fight creatures to get there. 
 
 At the village the player gets information. There is a baron controlling the villages nearby. The baron has super advanced technology, on a par with the players, which allows him to rule the villages as a dictator. No body can stop the baron. The village does not have the fuel but the baron might. The player can add an extra goal if they choose, to save the villagers and remove the baron. The player's main goal is to go to the baron for fuel.

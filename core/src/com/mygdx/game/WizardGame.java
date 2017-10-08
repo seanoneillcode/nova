@@ -35,6 +35,7 @@ import com.mygdx.game.core.Wizard;
 import com.mygdx.game.core.Eye;
 import com.mygdx.game.core.Damage;
 import com.mygdx.game.core.Level;
+import com.mygdx.game.core.Dialog;
 
 
 public class WizardGame extends ApplicationAdapter {
@@ -157,6 +158,10 @@ public class WizardGame extends ApplicationAdapter {
     private int levelIndex;
     private Level currentLevel;
 
+    private Dialog dialog;
+    private boolean dialogLock = false;
+    private boolean dialogActive = false;
+
     @Override
 	public void create () {
         prefs = Gdx.app.getPreferences("NovaGamePreferences");
@@ -240,6 +245,8 @@ public class WizardGame extends ApplicationAdapter {
         
         cameraPos = new Vector2();
 
+        dialog = new Dialog("This is a test, a magical test of shapes and figure. Only time will tell if it works");
+
         resetGame();
 	}
 
@@ -268,6 +275,7 @@ public class WizardGame extends ApplicationAdapter {
         for (Level level : levels) {
             level.reset();
         }
+        dialogActive = false;
     }
 
     private void loadNextLevel() {
@@ -354,7 +362,7 @@ public class WizardGame extends ApplicationAdapter {
             if (currentLevel != null) {
                 currentLevel.draw(batch);
             }
-            if (wizardLife > 0 && !hasWon) {
+            if (wizardLife > 0 && !hasWon && !dialogActive) {
                 update();
                 if (dashTimer > 0) {
                     dashafter.setColor(1, 1, 1, 1.0f * (dashTimer / DASH_TIMER));
@@ -398,18 +406,27 @@ public class WizardGame extends ApplicationAdapter {
                     font.draw(batch, "press 'd' to use slot B", offset.x + 42, offset.y + 25);
                 }
             } else {
-                if (hasWon) {
-                    font.draw(batch, "YOU HAVE KILLED TO SURVIVE", offset.x + 10, offset.y + 158);
-                    font.draw(batch, "PRESS SPACE TO PLAY AGAIN", offset.x + 30, offset.y + 68);
-                } else {
-                    font.draw(batch, "YOU RAN OUT OF Health", offset.x + 80, offset.y + 158);
-                    font.draw(batch, "YOU DESTROYED  " + enemiesKilled + "  ENEMIES", offset.x + 70, offset.y + 128);
-                    font.draw(batch, "PRESS SPACE TO PLAY AGAIN", offset.x + 70, offset.y + 68);
-                    if (enemiesKilled == previousHighScore) {
-                        font.draw(batch, "NEW HIGH SCORE!", offset.x + 70, offset.y + 98);
-                    } else {
-                        font.draw(batch, "CURRENT HIGH SCORE is " + this.previousHighScore, offset.x + 70, offset.y + 98);
+                if (dialogActive) {
+                    batch.draw(currentWizard, playerPosition.x, playerPosition.y);
+                    for (Entity e : enemies) {
+                        e.draw(batch);
                     }
+                    dialog.update();
+                    font.draw(batch, dialog.getLine(), offset.x + 10, offset.y + 80);
+                } else {
+                    if (hasWon) {
+                        font.draw(batch, "YOU HAVE KILLED TO SURVIVE", offset.x + 10, offset.y + 158);
+                        font.draw(batch, "PRESS SPACE TO PLAY AGAIN", offset.x + 30, offset.y + 68);
+                    } else {
+                        font.draw(batch, "YOU RAN OUT OF Health", offset.x + 80, offset.y + 158);
+                        font.draw(batch, "YOU DESTROYED  " + enemiesKilled + "  ENEMIES", offset.x + 70, offset.y + 128);
+                        font.draw(batch, "PRESS SPACE TO PLAY AGAIN", offset.x + 70, offset.y + 68);
+                        if (enemiesKilled == previousHighScore) {
+                            font.draw(batch, "NEW HIGH SCORE!", offset.x + 70, offset.y + 98);
+                        } else {
+                            font.draw(batch, "CURRENT HIGH SCORE is " + this.previousHighScore, offset.x + 70, offset.y + 98);
+                        }
+                    }                
                 }
             }
         }
@@ -908,6 +925,20 @@ public class WizardGame extends ApplicationAdapter {
         } else {
             showMenuLock = false;
         }
+
+        if (Gdx.input.isKeyPressed(Input.Keys.F)) {
+            if (!dialogLock) {
+                dialogLock = true;
+                if (dialogActive) {
+                    dialogActive = false;
+                    dialog.reset();
+                } else {
+                    dialogActive = true;
+                }
+            }
+        } else {
+            dialogLock = false;
+        }        
 
         if (Gdx.input.isKeyPressed(Input.Keys.H)) {
             if (!fullscreenLock) {
