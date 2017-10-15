@@ -7,6 +7,13 @@ import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.mygdx.game.WizardGame;
 import com.badlogic.gdx.math.Rectangle;
+import com.badlogic.gdx.maps.tiled.TmxMapLoader;
+import com.badlogic.gdx.maps.Map;
+import com.badlogic.gdx.maps.MapLayer;
+import com.badlogic.gdx.maps.MapObjects;
+import com.badlogic.gdx.maps.MapObject;
+import com.badlogic.gdx.maps.objects.PolygonMapObject;
+import com.badlogic.gdx.math.Polygon;
 
 public class Level {
     
@@ -22,10 +29,12 @@ public class Level {
     public Integer eyes;
     public Integer chargers;
     public Rectangle boundry;
+    public Map map;
 
     public Level(String backgroundImage) {
         this.backgroundImage = backgroundImage;
         this.isDone = false;
+        this.map = new TmxMapLoader().load("map01.tmx");
         reset();
     }
 
@@ -35,6 +44,11 @@ public class Level {
             boundry = new Rectangle(0,0,background.getRegionWidth(), background.getRegionHeight());
         }
         wizardGame.addWaveOfSkeletons(skeletons,archers,wizards,eyes,chargers);
+        MapLayer layer = map.getLayers().get("paths");
+        MapObjects mapObjects = layer.getObjects();
+        MapObject pathObject = mapObjects.get("path");
+        PolygonMapObject polygonPath = (PolygonMapObject) pathObject;
+        // Polygon poly = polygonPath.getPolygon();
         isLoaded = true;
     }
 
@@ -64,6 +78,12 @@ public class Level {
     public void draw(SpriteBatch batch) {
         if (background != null) {
             batch.draw(background, 0, 0);
+        }
+    }
+
+    public void dispose () {
+        if (map != null) {
+            map.dispose();
         }
     }
 

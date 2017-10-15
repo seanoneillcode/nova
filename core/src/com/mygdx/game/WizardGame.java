@@ -37,13 +37,24 @@ import com.mygdx.game.core.Damage;
 import com.mygdx.game.core.Level;
 import com.mygdx.game.core.Dialog;
 import com.mygdx.game.core.Conversation;
+import com.badlogic.gdx.physics.box2d.Body;
+import com.badlogic.gdx.math.Matrix4;
+import com.badlogic.gdx.physics.box2d.Body;
+import com.badlogic.gdx.physics.box2d.BodyDef;
+import com.badlogic.gdx.physics.box2d.Box2DDebugRenderer;
+import com.badlogic.gdx.physics.box2d.CircleShape;
+import com.badlogic.gdx.physics.box2d.Fixture;
+import com.badlogic.gdx.physics.box2d.FixtureDef;
+import com.badlogic.gdx.physics.box2d.PolygonShape;
+import com.badlogic.gdx.physics.box2d.World;
 
 
 public class WizardGame extends ApplicationAdapter {
 
     private static final int WORLD_WIDTH = 256;
     private static final int WORLD_HEIGHT = 256;
-
+    private static final float MAX_SPEED = 50.0f;
+    
     private SpriteBatch batch;
     private TextureRegion wizard;
     private TextureRegion downWizard;
@@ -65,7 +76,6 @@ public class WizardGame extends ApplicationAdapter {
     private Texture damageTex;
     private Texture playerDamageTex;
     private Sprite dashafter;
-    private Vector2 playerPosition;
     private Vector2 hitboxOffset;
     private Vector2 hitboxPos;
     private Vector2 addSpeed;
@@ -75,7 +85,7 @@ public class WizardGame extends ApplicationAdapter {
     private Vector2 dashMovement;
     private float dashTimer;
     private float hitboxTimer;
-    private static final float PLAYER_SPEED = 40.0f;
+    private static final float PLAYER_SPEED = 5000.0f;
     public static final float BULLET_SPEED = 60f;
     private static final float SKELETON_SPEED = 16f;
     private static final float ARCHER_SPEED = 32f;
@@ -166,8 +176,24 @@ public class WizardGame extends ApplicationAdapter {
     private boolean dialogActive = false;
     private boolean keyDLock = false;
 
+
+    World world;
+    Matrix4 debugMatrix;
+    Box2DDebugRenderer debugRenderer;
+    Body playerBody;
+
+    @Override
+    public void dispose () { 
+        for (Level level : levels) {
+            level.dispose();
+        }
+    }
+
     @Override
 	public void create () {
+        world = new World(new Vector2(0, 0), true);
+        world.setContinuousPhysics(true);
+
         prefs = Gdx.app.getPreferences("NovaGamePreferences");
         previousHighScore = prefs.getInteger("highscore");
 
@@ -181,6 +207,8 @@ public class WizardGame extends ApplicationAdapter {
         float h = Gdx.graphics.getHeight();
         camera = new OrthographicCamera(WORLD_WIDTH, WORLD_HEIGHT * (h / w));
         camera.update();
+        debugMatrix = new Matrix4(camera.combined);
+        debugRenderer = new Box2DDebugRenderer();
 
 		batch = new SpriteBatch();
         wizard = new TextureRegion(new Texture("spaceman.png"));
@@ -199,7 +227,6 @@ public class WizardGame extends ApplicationAdapter {
         archer = new Texture("archer.png");
         charger = new Texture("charger.png");
         badWizard = new Texture("wizard.png");
-        playerPosition = getRandomPosition();
         actionRect = new Rectangle(0,0,20,20);
 
         dashafter = new Sprite(new Texture("dash-after.png"));
@@ -449,15 +476,15 @@ public class WizardGame extends ApplicationAdapter {
                 )
                 .build());
 
-
+        createPlayer();
         resetGame();
 	}
 
     private void resetGame() {
         waitStart = WAIT_START_COOLDOWN;
         wizardLife = 10;
-        playerPosition = new Vector2(128, 128);
-        cameraPos = playerPosition.cpy();
+        setPlayerPos(128,128);
+        cameraPos = getPlayerPos();
         enemies.clear();
         damages.clear();
         bullets.clear();
@@ -482,6 +509,44 @@ public class WizardGame extends ApplicationAdapter {
         conversationIndex = 0;
         currentConversation = conversations.get(conversationIndex);
         currentConversation.reset();
+        
+    }
+
+    private void setPlayerPos(Vector2 pos) {
+        playerBody.setTransform(pos.cpy(), 0);
+    }
+
+    private void setPlayerPos(float x, float y) {
+        setPlayerPos(new Vector2(x, y));
+    }
+
+    private Vector2 getPlayerPos() {
+        return playerBody.getPosition().cpy();
+    }
+
+    private void createPlayer() {
+        BodyDef bodyDef = new BodyDef();
+        bodyDef.type = BodyDef.BodyType.DynamicBody;
+        bodyDef.position.set(128, 128);
+
+        Body body = world.createBody(bodyDef);
+        body.setFixedRotation(true);
+        body.setBullet(true);
+        body.setLinearDamping(3.0f);
+
+        CircleShape shape = new CircleShape();
+        shape.setRadius(6);
+
+        FixtureDef fixtureDef = new FixtureDef();
+        fixtureDef.shape = shape;
+        fixtureDef.density = 0.1f;
+        fixtureDef.friction = 0.1f;
+
+        Fixture fixture = body.createFixture(fixtureDef);
+
+        playerBody = body;
+
+        shape.dispose();
     }
 
     private void loadNextLevel() {
@@ -495,9 +560,10 @@ public class WizardGame extends ApplicationAdapter {
                 currentLevel.load(this);
                 Vector2 nextPos = currentLevel.getStartPos();
                 if (nextPos != null) {
-                    playerPosition = nextPos.cpy();
-                    camera.position.x = playerPosition.x;
-                    camera.position.y = playerPosition.y;
+                    setPlayerPos(nextPos.cpy());
+                    Vector2 pos = getPlayerPos();
+                    camera.position.x = pos.x;
+                    camera.position.y = pos.y;
                 }
             }
         }
@@ -535,7 +601,8 @@ public class WizardGame extends ApplicationAdapter {
     }
 
     private Vector3 getLerpCamera() {
-        Vector3 target = new Vector3(playerPosition.x, playerPosition.y, 0);
+        Vector2 pos = getPlayerPos();
+        Vector3 target = new Vector3(pos.x, pos.y, 0);
         final float speed = 2.0f * Gdx.graphics.getDeltaTime();
         float ispeed = 1.0f - speed;
         Vector3 cameraPosition = camera.position.cpy();
@@ -545,12 +612,33 @@ public class WizardGame extends ApplicationAdapter {
         return cameraPosition;
     }
 
+    float SCALE = 1f;
+
+    public float scale(float valueToBeScaled) {
+        return valueToBeScaled/SCALE;
+    }
+
+    public void resize (int width, int height) {
+        float w = Gdx.graphics.getWidth();
+        float h = Gdx.graphics.getHeight();
+        camera = new OrthographicCamera(WORLD_WIDTH, WORLD_HEIGHT * (h / w));
+        camera.update();
+        // screenWidth = WORLD_HEIGHT * width / (float)height;
+        // screenHeight = WORLD_HEIGHT;
+        // camera.setToOrtho(false, scale(WORLD_HEIGHT * width / (float)height), scale(WORLD_HEIGHT));
+        batch.setProjectionMatrix(camera.combined);
+        debugMatrix = new Matrix4(camera.combined);
+    }
+
 	@Override
 	public void render () {
+        playerBody.setAwake(true);
         camera.position.set(getLerpCamera());
         camera.update();
         batch.setProjectionMatrix(camera.combined);
         handleInput();
+        world.step(Gdx.graphics.getDeltaTime(), 6, 2);
+        playerBody.setAwake(true);
 
 		Gdx.gl.glClearColor(0, 0, 0, 1);
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
@@ -575,7 +663,8 @@ public class WizardGame extends ApplicationAdapter {
                     dashafter.setPosition(dashafterPos.x, dashafterPos.y);
                     dashafter.draw(batch);
                 }
-                batch.draw(currentWizard, playerPosition.x, playerPosition.y);
+                Vector2 pos = getPlayerPos();
+                batch.draw(currentWizard, pos.x, pos.y);
                 for (Bullet b : bullets) {
                     b.sprite.draw(batch);
                 }
@@ -611,7 +700,8 @@ public class WizardGame extends ApplicationAdapter {
                 }
             } else {
                 if (dialogActive) {
-                    batch.draw(currentWizard, playerPosition.x, playerPosition.y);
+                    Vector2 pos = getPlayerPos();
+                    batch.draw(currentWizard, pos.x, pos.y);
                     for (Entity e : enemies) {
                         e.draw(batch);
                     }
@@ -634,7 +724,7 @@ public class WizardGame extends ApplicationAdapter {
                 }
             }
         }
-
+        debugRenderer.render(world,  new Matrix4(camera.combined));
 		batch.end();
         
         if (wizardLife > 0 && !isMenuShown) {
@@ -666,15 +756,10 @@ public class WizardGame extends ApplicationAdapter {
             shapeRenderer.end();
         }
 	}
-	
-	@Override
-	public void dispose () {
-		batch.dispose();
-        font.dispose();
-	}
 
     public Rectangle getPlayerRect() {
-        return new Rectangle(playerPosition.x + 4, playerPosition.y + 4, 10, 10);
+        Vector2 pos = getPlayerPos();
+        return new Rectangle(pos.x + 4, pos.y + 4, 10, 10);
     }
 
     private void updateMenu() {
@@ -693,22 +778,31 @@ public class WizardGame extends ApplicationAdapter {
         addSpeed.add(dashMovement.x, dashMovement.y);
         dashMovement.x = dashMovement.x * DASH_FRICTION;
         dashMovement.y = dashMovement.y * DASH_FRICTION;
-        playerPosition.add(addSpeed);
+        if (playerBody != null) {
+            // sprite.setPosition(playerBody.getPosition().x, playerBody.getPosition().y);
+            Vector2 limitVel = playerBody.getLinearVelocity();
+            float speed = limitVel.len();
+            if (speed > MAX_SPEED) {
+                playerBody.setLinearVelocity(limitVel.nor().scl(MAX_SPEED));
+            }
+        }
+        // playerPosition.add(addSpeed);
+
 
         if (currentLevel != null) {
             Rectangle boundry = currentLevel.boundry;
-            if (playerPosition.x < boundry.x) {
-                playerPosition.x = boundry.x;
-            }
-            if (playerPosition.x > boundry.x + boundry.width) {
-                playerPosition.x = boundry.x + boundry.width;
-            }
-            if (playerPosition.y < boundry.y) {
-                playerPosition.y = boundry.y;
-            }
-            if (playerPosition.y > boundry.y + boundry.height) {
-                playerPosition.y = boundry.y + boundry.height;
-            }
+            // if (playerPosition.x < boundry.x) {
+            //     playerPosition.x = boundry.x;
+            // }
+            // if (playerPosition.x > boundry.x + boundry.width) {
+            //     playerPosition.x = boundry.x + boundry.width;
+            // }
+            // if (playerPosition.y < boundry.y) {
+            //     playerPosition.y = boundry.y;
+            // }
+            // if (playerPosition.y > boundry.y + boundry.height) {
+            //     playerPosition.y = boundry.y + boundry.height;
+            // }
         }
         Rectangle playerRectangle = getPlayerRect();
 
@@ -730,7 +824,7 @@ public class WizardGame extends ApplicationAdapter {
                 if (playerRectangle.overlaps(bullet.sprite.getBoundingRectangle()) && !bullet.isOwner("player1")) {
                     bullet.ttl = -1;
                     hurtPlayer();
-                    createDamage(playerPosition.cpy(), playerDamageTex);
+                    createDamage(getPlayerPos(), playerDamageTex);
                 }    
             }
         }
@@ -748,7 +842,7 @@ public class WizardGame extends ApplicationAdapter {
         if (hitboxTimer >= 0) {
             hitboxTimer = hitboxTimer - delta;
         }
-        hitboxPos = playerPosition.cpy().add(hitboxOffset);
+        hitboxPos = getPlayerPos().add(hitboxOffset);
         stabSprite.setPosition(hitboxPos.x, hitboxPos.y);
         if (hitboxTimer >= HITBOX_COOLDOWN) {
             List<Entity> collidingEnemies = getCollidingEnemies(stabSprite.getBoundingRectangle(), "player1");
@@ -759,15 +853,16 @@ public class WizardGame extends ApplicationAdapter {
         }
 
         if (isAction) {
-            actionRect.x = playerPosition.x + actionOffset.x;
-            actionRect.y = playerPosition.y + actionOffset.y;
+            Vector2 pos = getPlayerPos();
+            actionRect.x = pos.x + actionOffset.x;
+            actionRect.y = pos.y + actionOffset.y;
             // GET colliding characters and items
         }
 
         if (blockTimer >= 0) {
             blockTimer = blockTimer - delta; 
         }
-        blockPos = playerPosition.cpy().add(blockOffset);
+        blockPos = getPlayerPos().add(blockOffset);
         blockSprite.setPosition(blockPos.x, blockPos.y);
         if (blockTimer >= (MAX_BLOCK_COOLDOWN * 0.5f)) {
             // check collisions
@@ -805,7 +900,7 @@ public class WizardGame extends ApplicationAdapter {
         List<Entity> collidingEnemies = getCollidingEnemies(playerRectangle, "player1");
         if (collidingEnemies.size() > 0) {
             hurtPlayer();
-            createDamage(playerPosition.cpy(), playerDamageTex);
+            createDamage(getPlayerPos(), playerDamageTex);
         }
         for (Entity entity : collidingEnemies) {
             entity.takeDamage(1);
@@ -816,7 +911,7 @@ public class WizardGame extends ApplicationAdapter {
         Iterator<Entity> iter2 = enemies.listIterator();
         while (iter2.hasNext()) {
             Entity entity = iter2.next();
-            entity.update(playerPosition);
+            entity.update(getPlayerPos());
             if (entity.shouldRemove()) {
                 iter2.remove();
                 enemiesKilled = enemiesKilled + 1;
@@ -880,7 +975,7 @@ public class WizardGame extends ApplicationAdapter {
                 dialogActive = true;
             }
         }
-
+        dialogActive = false;
     }
 
     private List<Entity> getCollidingEnemies(Rectangle rect, String owner) {
@@ -972,7 +1067,7 @@ public class WizardGame extends ApplicationAdapter {
             createBlock(offset);
         }
         if (slot.equals("gun")) {
-            Vector2 offset = playerPosition.cpy();
+            Vector2 offset = getPlayerPos();
             Vector2 dir = new Vector2();
 
             if (lastDirection.x < 0) {
@@ -1038,7 +1133,7 @@ public class WizardGame extends ApplicationAdapter {
                 dashMovement = lastDirection.cpy().scl(INITIAL_DASH);
                 dashMovement.y = dashMovement.y * -1;
                 dashTimer = DASH_TIMER;
-                dashafterPos = playerPosition.cpy();
+                dashafterPos = getPlayerPos();
             }
         }
     }
@@ -1049,6 +1144,7 @@ public class WizardGame extends ApplicationAdapter {
             hitboxOffset = offset.cpy();
         }
     }
+
 
 	private void handleInput() {
         float actualSpeed = PLAYER_SPEED * Gdx.graphics.getDeltaTime();
@@ -1102,6 +1198,7 @@ public class WizardGame extends ApplicationAdapter {
             blockCooldown = blockCooldown - Gdx.graphics.getDeltaTime();
             boolean canChangeDir = hitboxTimer < 0;
             addSpeed = new Vector2();
+            Vector2 pos = playerBody.getPosition();
             if (!canChangeDir) {
                 actualSpeed = 0;
             }
@@ -1115,7 +1212,8 @@ public class WizardGame extends ApplicationAdapter {
                     lastDirection = inputVector.cpy();
                     currentWizard = wizard;
                 }
-                addSpeed.add(-actualSpeed, 0);
+                //addSpeed.add(-actualSpeed, 0);
+                playerBody.applyLinearImpulse(-actualSpeed, 0, pos.x, pos.y, true);
             }
             if (isRightPressed) {
                 if (canChangeDir) {
@@ -1127,7 +1225,8 @@ public class WizardGame extends ApplicationAdapter {
                     lastDirection = inputVector.cpy();
                     currentWizard = wizard;
                 }
-                addSpeed.add(actualSpeed, 0);
+                // addSpeed.add(actualSpeed, 0);
+                playerBody.applyLinearImpulse(actualSpeed, 0, pos.x, pos.y, true);
             }
             if (isUpPressed) {
                 if (canChangeDir) {
@@ -1135,7 +1234,8 @@ public class WizardGame extends ApplicationAdapter {
                     lastDirection = inputVector.cpy();
                     currentWizard = upWizard;
                 }
-                addSpeed.add(0, actualSpeed);
+                playerBody.applyLinearImpulse(0, actualSpeed, pos.x, pos.y, true);
+                // addSpeed.add(0, actualSpeed);
             }
             if (isDownPressed) {
                 if (canChangeDir) {
@@ -1143,7 +1243,8 @@ public class WizardGame extends ApplicationAdapter {
                     lastDirection = inputVector.cpy();
                     currentWizard = downWizard;
                 }
-                addSpeed.add(0, -actualSpeed);
+                playerBody.applyLinearImpulse(0, -actualSpeed, pos.x, pos.y, true);
+                // addSpeed.add(0, -actualSpeed);
             }
             addSpeed.clamp(-actualSpeed,actualSpeed);
             if (Gdx.input.isKeyPressed(Input.Keys.S)) {
