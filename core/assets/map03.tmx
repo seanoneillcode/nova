@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.0" orientation="orthogonal" renderorder="right-down" width="10" height="10" tilewidth="32" tileheight="32" nextobjectid="20">
+ <imagelayer name="background">
+  <image source="background.png" width="300" height="300"/>
+ </imagelayer>
+ <objectgroup name="walls">
+  <object id="6" x="48.5" y="76.5">
+   <polygon points="0,0 66.5,0.5 66.5,-9 -1.5,-11.5"/>
+  </object>
+  <object id="7" x="114.5" y="71">
+   <polygon points="0,0 66.5,0.5 64,-8 -1,-5.5"/>
+  </object>
+  <object id="8" x="177.5" y="70">
+   <polygon points="0,0 2,5 76,6 77.5,-5.5"/>
+  </object>
+  <object id="9" x="252" y="71.5">
+   <polygon points="0,0 38,0 35.5,-13 -1.5,-8.5"/>
+  </object>
+  <object id="10" x="277.5" y="68.5">
+   <polygon points="0,0 1.5,27 20,27.5 16.5,-3"/>
+  </object>
+  <object id="11" x="271.5" y="96">
+   <polygon points="0,0 26.5,-0.5 24.5,140.5 2.5,143"/>
+  </object>
+  <object id="12" x="278" y="237.5">
+   <polygon points="0,0 0,25.5 20,25.5 17,-3.5"/>
+  </object>
+  <object id="13" x="277" y="260.5">
+   <polygon points="0,0 -255,1 -254,9.5 4,9.5"/>
+  </object>
+  <object id="15" x="21.5" y="71">
+   <polygon points="0,0 28,1 33,-14.5 0,-13"/>
+  </object>
+  <object id="16" x="21.5" y="72">
+   <polygon points="0,0 1.5,25.5 -15.5,26.5 -13,-3"/>
+  </object>
+  <object id="17" x="14.5" y="96.5">
+   <polygon points="0,0 15.5,1.5 13.5,140.5 -1.5,140"/>
+  </object>
+  <object id="18" x="21.5" y="235.5">
+   <polygon points="0,0 1.5,33.5 -16.5,32.5 -13.5,-3"/>
+  </object>
+  <object id="19" x="133" y="163">
+   <polygon points="0,0 15,13.5 28,0 14,-27.5"/>
+  </object>
+ </objectgroup>
+</map>

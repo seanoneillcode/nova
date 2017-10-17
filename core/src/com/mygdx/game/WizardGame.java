@@ -181,18 +181,23 @@ public class WizardGame extends ApplicationAdapter {
     Matrix4 debugMatrix;
     Box2DDebugRenderer debugRenderer;
     Body playerBody;
+    List<Body> walls;
 
     @Override
     public void dispose () { 
         for (Level level : levels) {
             level.dispose();
         }
+        // for (Body wall : walls) {
+        //     wall.dispose();
+        // }
     }
 
     @Override
 	public void create () {
         world = new World(new Vector2(0, 0), true);
         world.setContinuousPhysics(true);
+        walls = new ArrayList<Body>();
 
         prefs = Gdx.app.getPreferences("NovaGamePreferences");
         previousHighScore = prefs.getInteger("highscore");
@@ -247,39 +252,46 @@ public class WizardGame extends ApplicationAdapter {
             .startPos(new Vector2(195,151))
             .goalRect(new Rectangle(304,90,24,80))
             .boundry(new Rectangle(120,90,310,64))
+            .tmxName("map01.tmx")
             .build());
         // 1
         levels.add(new Level.Builder("canyon-background.png")
             .startPos(new Vector2(20,186))
             .skeletons(2)
             .boundry(new Rectangle(20,60,260,210))
+            .tmxName("map02.tmx")
             .build());
         // 2
         levels.add(new Level.Builder("canyon-background.png")
             .skeletons(4)
             .boundry(new Rectangle(20,60,260,210))
+            .tmxName("map02.tmx")
             .build());
         // 3
         levels.add(new Level.Builder("canyon-background.png")
             .skeletons(4)
             .archers(2)
             .boundry(new Rectangle(20,60,260,210))
+            .tmxName("map02.tmx")
             .build());
         // 4
         levels.add(new Level.Builder("canyon-background.png")
             .eyes(2)
             .boundry(new Rectangle(20,60,260,210))
+            .tmxName("map02.tmx")
             .build());
         // 5
         levels.add(new Level.Builder("canyon-background.png")
             .goalRect(new Rectangle(250,125,50,105))
             .boundry(new Rectangle(20,60,260,210))
+            .tmxName("map02.tmx")
             .build());
         // 6
         levels.add(new Level.Builder("background.png")
-            .startPos(new Vector2(0,100))
+            .startPos(new Vector2(30,100))
             .goalRect(new Rectangle(117,119,30,30))
             .boundry(new Rectangle(0,0,270,210))
+            .tmxName("map03.tmx")
             .build());
         // 7
         levels.add(new Level.Builder("background.png")
@@ -287,32 +299,38 @@ public class WizardGame extends ApplicationAdapter {
             .archers(2)
             .skeletons(4)
             .chargers(2)
+            .tmxName("map03.tmx")
             .build());
         // 8
         levels.add(new Level.Builder("background.png")
             .boundry(new Rectangle(0,0,270,210))
             .eyes(2)
             .skeletons(6)
+            .tmxName("map03.tmx")
             .build());
         // 9
         levels.add(new Level.Builder("background.png")
             .boundry(new Rectangle(0,0,270,210))
             .chargers(5)
+            .tmxName("map03.tmx")
             .build());
         // 10
         levels.add(new Level.Builder("background.png")
             .goalRect(new Rectangle(117,119,30,30))
             .boundry(new Rectangle(0,0,270,210))
+            .tmxName("map03.tmx")
             .build());
         // 11
         levels.add(new Level.Builder("background.png")
             .boundry(new Rectangle(0,0,270,210))
+            .tmxName("map03.tmx")
             .wizards(1)
             .build());
         // 12
         levels.add(new Level.Builder("background.png")
             .goalRect(new Rectangle(30,0,30,330))
             .boundry(new Rectangle(0,0,270,210))
+            .tmxName("map03.tmx")
             .build());
 
 
@@ -521,7 +539,7 @@ public class WizardGame extends ApplicationAdapter {
     }
 
     private Vector2 getPlayerPos() {
-        return playerBody.getPosition().cpy();
+        return playerBody.getPosition().cpy().add(-6,-6);
     }
 
     private void createPlayer() {
@@ -549,7 +567,32 @@ public class WizardGame extends ApplicationAdapter {
         shape.dispose();
     }
 
+    public void createWall(Vector2 pos, float[] vertices) {
+
+        BodyDef bodyDef = new BodyDef();
+        bodyDef.type = BodyDef.BodyType.StaticBody;
+        bodyDef.position.set(pos.x, pos.y);
+        Body body = world.createBody(bodyDef);
+        PolygonShape shape = new PolygonShape();
+        shape.set(vertices);
+
+        FixtureDef fixtureDef = new FixtureDef();
+        fixtureDef.shape = shape;
+        fixtureDef.density = 1f;
+        fixtureDef.friction = 0f;
+
+        Fixture fixture = body.createFixture(fixtureDef);
+
+        shape.dispose();
+
+        walls.add(body);
+    }
+
     private void loadNextLevel() {
+        for (Body wall : walls) {
+            world.destroyBody(wall);
+        }
+        walls.clear();
         levelIndex++;
         if (levelIndex >= levels.size()) {
             levelIndex = 0;
@@ -724,7 +767,7 @@ public class WizardGame extends ApplicationAdapter {
                 }
             }
         }
-        debugRenderer.render(world,  new Matrix4(camera.combined));
+        //debugRenderer.render(world,  new Matrix4(camera.combined));
 		batch.end();
         
         if (wizardLife > 0 && !isMenuShown) {
@@ -779,7 +822,6 @@ public class WizardGame extends ApplicationAdapter {
         dashMovement.x = dashMovement.x * DASH_FRICTION;
         dashMovement.y = dashMovement.y * DASH_FRICTION;
         if (playerBody != null) {
-            // sprite.setPosition(playerBody.getPosition().x, playerBody.getPosition().y);
             Vector2 limitVel = playerBody.getLinearVelocity();
             float speed = limitVel.len();
             if (speed > MAX_SPEED) {
@@ -788,22 +830,6 @@ public class WizardGame extends ApplicationAdapter {
         }
         // playerPosition.add(addSpeed);
 
-
-        if (currentLevel != null) {
-            Rectangle boundry = currentLevel.boundry;
-            // if (playerPosition.x < boundry.x) {
-            //     playerPosition.x = boundry.x;
-            // }
-            // if (playerPosition.x > boundry.x + boundry.width) {
-            //     playerPosition.x = boundry.x + boundry.width;
-            // }
-            // if (playerPosition.y < boundry.y) {
-            //     playerPosition.y = boundry.y;
-            // }
-            // if (playerPosition.y > boundry.y + boundry.height) {
-            //     playerPosition.y = boundry.y + boundry.height;
-            // }
-        }
         Rectangle playerRectangle = getPlayerRect();
 
         Iterator<Bullet> iter = bullets.listIterator();
@@ -975,7 +1001,6 @@ public class WizardGame extends ApplicationAdapter {
                 dialogActive = true;
             }
         }
-        dialogActive = false;
     }
 
     private List<Entity> getCollidingEnemies(Rectangle rect, String owner) {

@@ -14,6 +14,7 @@ import com.badlogic.gdx.maps.MapObjects;
 import com.badlogic.gdx.maps.MapObject;
 import com.badlogic.gdx.maps.objects.PolygonMapObject;
 import com.badlogic.gdx.math.Polygon;
+import java.util.Iterator;
 
 public class Level {
     
@@ -29,26 +30,41 @@ public class Level {
     public Integer eyes;
     public Integer chargers;
     public Rectangle boundry;
+    public String tmxName;
     public Map map;
 
     public Level(String backgroundImage) {
         this.backgroundImage = backgroundImage;
         this.isDone = false;
-        this.map = new TmxMapLoader().load("map01.tmx");
         reset();
     }
 
     public void load(WizardGame wizardGame) {
+        Vector2 offset = new Vector2(0, -16);
         background = new TextureRegion(new Texture(this.backgroundImage));
         if (boundry == null) {
             boundry = new Rectangle(0,0,background.getRegionWidth(), background.getRegionHeight());
         }
         wizardGame.addWaveOfSkeletons(skeletons,archers,wizards,eyes,chargers);
-        MapLayer layer = map.getLayers().get("paths");
-        MapObjects mapObjects = layer.getObjects();
-        MapObject pathObject = mapObjects.get("path");
-        PolygonMapObject polygonPath = (PolygonMapObject) pathObject;
-        // Polygon poly = polygonPath.getPolygon();
+
+        if (this.tmxName != null) {
+            if (map == null) {
+                map = new TmxMapLoader().load(this.tmxName);
+            }
+            MapLayer layer = map.getLayers().get("walls");
+            MapObjects mapObjects = layer.getObjects();
+            Iterator<MapObject> objects = mapObjects.iterator();
+
+            while (objects.hasNext()) {
+                MapObject obj = objects.next();
+                if (obj instanceof PolygonMapObject) {
+                    PolygonMapObject polygonPath = (PolygonMapObject) obj;
+                    Polygon poly = polygonPath.getPolygon();
+                    wizardGame.createWall(new Vector2(poly.getX() + offset.x, poly.getY() + offset.y), poly.getVertices());
+                }
+            }
+        }
+        
         isLoaded = true;
     }
 
@@ -101,6 +117,7 @@ public class Level {
         Integer wizards = 0;
         Integer eyes = 0;
         Integer chargers = 0;
+        String tmxName;
         Rectangle boundry;
 
         public Builder(String backgroundImage) {
@@ -109,6 +126,11 @@ public class Level {
 
         public Builder startPos(Vector2 startPos) {
             this.startPos = startPos;
+            return this;
+        }
+
+        public Builder tmxName(String tmxName) {
+            this.tmxName = tmxName;
             return this;
         }
 
@@ -157,6 +179,9 @@ public class Level {
             }
             if (boundry != null) {
                 level.boundry = this.boundry;
+            }
+            if (tmxName != null) {
+                level.tmxName = this.tmxName;
             }
             level.skeletons = this.skeletons;
             level.archers = this.archers;

@@ -1,20 +1,29 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.0" orientation="orthogonal" renderorder="right-down" width="14" height="10" tilewidth="32" tileheight="32" nextobjectid="12">
+<map version="1.0" orientation="orthogonal" renderorder="right-down" width="14" height="10" tilewidth="32" tileheight="32" nextobjectid="28">
  <imagelayer name="background">
   <image source="background-ship.png" width="400" height="300"/>
  </imagelayer>
- <objectgroup name="paths">
-  <object id="2" name="exit" type="exit" x="336" y="173" width="28" height="34"/>
-  <object id="4" name="start" type="start" x="188" y="111" width="38" height="37"/>
-  <object id="5" name="chat" type="chat" x="195" y="125" width="40" height="29"/>
-  <object id="8" type="path" x="124" y="134">
-   <polyline points="0,0 34,25 97,-12 131,5 169,-6 180,7 196,2 205,43 240,45 239,-37 -3,-34 1,0"/>
+ <objectgroup name="walls">
+  <object id="21" x="354.667" y="178.667">
+   <polygon points="0,0 -37.3333,-6 -61.3333,-51.3333 -26,-80"/>
   </object>
-  <object id="10" type="path" x="125" y="134">
-   <polyline points="0,0 4,85 -43,85 -39,-3 1,-1"/>
+  <object id="22" x="294" y="126.667">
+   <polygon points="0,0 -43.3333,14 -72.6667,-3.33333 -72.6667,-30 32,-28"/>
   </object>
-  <object id="11" type="path" x="126" y="218">
-   <polyline points="0,0 39,18 62,-10 161,8 198,-11 237,-11 235,18 64,40 4,22 0,1"/>
+  <object id="23" x="222" y="122.667">
+   <polygon points="0,0 -64.6667,36 -98,16 -93.3333,-30 0.666667,-26.6667"/>
+  </object>
+  <object id="24" x="125.333" y="116">
+   <polygon points="0,0 6.66667,103.333 -44,106 -28,-5.33333"/>
+  </object>
+  <object id="25" x="130" y="216.667">
+   <polygon points="0,0 36,20.6667 55.3333,36.6667 -38.6667,40.6667 -47.3333,4"/>
+  </object>
+  <object id="26" x="185.333" y="204.667">
+   <polygon points="0,0 -21.3333,30.6667 2,48.6667 116.667,55.3333 106.667,23.3333"/>
+  </object>
+  <object id="27" x="291.333" y="226.667">
+   <polygon points="0,0 34,-21.3333 69.3333,-25.3333 61.3333,6 10,34.6667"/>
   </object>
  </objectgroup>
 </map>

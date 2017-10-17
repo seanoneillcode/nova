@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.0" orientation="orthogonal" renderorder="right-down" width="12" height="11" tilewidth="32" tileheight="32" nextobjectid="14">
+ <imagelayer name="background">
+  <image source="canyon-background.png" width="340" height="340"/>
+ </imagelayer>
+ <objectgroup name="walls">
+  <object id="2" x="157" y="34">
+   <polygon points="0,0 51,13 83,12 94,-20 -1,-19"/>
+  </object>
+  <object id="3" x="239" y="44">
+   <polygon points="0,0 31,35 46,30 69,7 10,-29"/>
+  </object>
+  <object id="4" x="285" y="72">
+   <polygon points="0,0 -5,25 15,39 37,34 19,-13"/>
+  </object>
+  <object id="5" x="299" y="110">
+   <polygon points="0,0 -6,54 31,62 30,-5"/>
+  </object>
+  <object id="6" x="300" y="226">
+   <polygon points="0,0 28,-7 34,103 -33,107"/>
+  </object>
+  <object id="7" x="274" y="308">
+   <polygon points="0,0 -42,-21 -98,-27 -128,-9 -124,16 -9,23"/>
+  </object>
+  <object id="8" x="144" y="296">
+   <polygon points="0,0 -46,-2 -99,-1 -75,27 3,24"/>
+  </object>
+  <object id="9" x="48" y="293">
+   <polygon points="0,0 56,-17 19,-64 -9,-86 -39,-74"/>
+  </object>
+  <object id="10" x="37" y="206">
+   <polygon points="0,0 -13,-45 -34,-46 -28,12"/>
+  </object>
+  <object id="11" x="157" y="33">
+   <polygon points="0,0 -6,19 -97,33 -144,-15 -1,-18"/>
+  </object>
+  <object id="12" x="60" y="64">
+   <polygon points="0,0 7,15 -16,32 -52,35 -45,-43"/>
+  </object>
+  <object id="13" x="6" y="97">
+   <polygon points="0,0 0,41 23,43 30,-5"/>
+  </object>
+ </objectgroup>
+</map>
