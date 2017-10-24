@@ -183,7 +183,6 @@ public class WizardGame extends ApplicationAdapter {
 
     private Map<String,Animation<TextureRegion>> anims;
     private float animationDeltaTime = 0;
-    private Vector2 animationOffset = new Vector2(-16, 16);
 
     World world;
     Matrix4 debugMatrix;
@@ -560,11 +559,11 @@ public class WizardGame extends ApplicationAdapter {
     }
 
     private Vector2 getPlayerPos() {
-        return playerBody.getPosition().cpy().add(-6,-6);
+        return playerBody.getPosition().cpy().sub(8,8);
     }
 
     private Vector2 getDrawPlayerPos() {
-        return getPlayerPos().sub(9,3);
+        return getPlayerPos().sub(8,6);
     }
 
     private void createPlayer() {
@@ -583,7 +582,7 @@ public class WizardGame extends ApplicationAdapter {
         FixtureDef fixtureDef = new FixtureDef();
         fixtureDef.shape = shape;
         fixtureDef.density = 0.1f;
-        fixtureDef.friction = 0.1f;
+        fixtureDef.friction = 0.2f;
 
         Fixture fixture = body.createFixture(fixtureDef);
 
@@ -795,7 +794,7 @@ public class WizardGame extends ApplicationAdapter {
                 }
             }
         }
-        debugRenderer.render(world,  new Matrix4(camera.combined));
+        //debugRenderer.render(world,  new Matrix4(camera.combined));
 		batch.end();
         
         if (wizardLife > 0 && !isMenuShown) {
@@ -1254,6 +1253,9 @@ public class WizardGame extends ApplicationAdapter {
                 currentAnimation = "idle";
                 addSpeed = new Vector2();
                 Vector2 pos = playerBody.getPosition();
+                if (!isLeftPressed && !isRightPressed && ! isUpPressed && !isDownPressed) {
+                    playerBody.setLinearVelocity(0,0);
+                }
                 if (!canChangeDir) {
                     actualSpeed = 0;
                 }
