@@ -3,8 +3,11 @@ package com.mygdx.game;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 import java.lang.Math;
 
+import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Graphics;
@@ -47,6 +50,7 @@ import com.badlogic.gdx.physics.box2d.Fixture;
 import com.badlogic.gdx.physics.box2d.FixtureDef;
 import com.badlogic.gdx.physics.box2d.PolygonShape;
 import com.badlogic.gdx.physics.box2d.World;
+import com.badlogic.gdx.graphics.g2d.Animation;
 
 
 public class WizardGame extends ApplicationAdapter {
@@ -59,7 +63,6 @@ public class WizardGame extends ApplicationAdapter {
     private TextureRegion wizard;
     private TextureRegion downWizard;
     private TextureRegion upWizard;
-    private TextureRegion currentWizard;
     private TextureRegion abilityMenu;
     private TextureRegion slotASelect;
     private TextureRegion slotBSelect;
@@ -149,6 +152,8 @@ public class WizardGame extends ApplicationAdapter {
     private boolean pointerLock = false;
     private boolean hasWon = false;
 
+    private String currentAnimation;
+
     Preferences prefs;
     int previousHighScore;
 
@@ -176,6 +181,9 @@ public class WizardGame extends ApplicationAdapter {
     private boolean dialogActive = false;
     private boolean keyDLock = false;
 
+    private Map<String,Animation<TextureRegion>> anims;
+    private float animationDeltaTime = 0;
+    private Vector2 animationOffset = new Vector2(-16, 16);
 
     World world;
     Matrix4 debugMatrix;
@@ -188,9 +196,6 @@ public class WizardGame extends ApplicationAdapter {
         for (Level level : levels) {
             level.dispose();
         }
-        // for (Body wall : walls) {
-        //     wall.dispose();
-        // }
     }
 
     @Override
@@ -219,13 +224,18 @@ public class WizardGame extends ApplicationAdapter {
         wizard = new TextureRegion(new Texture("spaceman.png"));
         upWizard = new TextureRegion(new Texture("spaceman-up.png"));
         downWizard = new TextureRegion(new Texture("spaceman-down.png"));
+        
+        anims = new HashMap<String,Animation<TextureRegion>>();
+        anims.put("idle", loadAnimation("blue-idle.png", 2, 0.2f));
+        anims.put("run", loadAnimation("blue-run.png", 8, 0.1f));
+        currentAnimation = "idle";
+
         damageTex = new Texture("damage.png");
         playerDamageTex = new Texture("player-damage.png");
         stabSprite = new Sprite(new Texture("stab.png"));
         stabSprite.setCenter(7,3);
         blockSprite = new Sprite(new Texture("sheild.png"));
         blockSprite.setCenter(2,8);
-        currentWizard = wizard;
         bolt = new Texture("bolt.png");
         eye = new Texture("eye.png");
         skeleton = new Texture("skeleton.png");
@@ -498,6 +508,17 @@ public class WizardGame extends ApplicationAdapter {
         resetGame();
 	}
 
+    private Animation<TextureRegion> loadAnimation(String fileName, int numberOfFrames, float frameDelay) {
+        Texture sheet = new Texture(Gdx.files.internal(fileName));
+        TextureRegion[][] tmp = TextureRegion.split(sheet, sheet.getWidth(), sheet.getHeight() / numberOfFrames);
+        Array<TextureRegion> frames = new Array<TextureRegion>(numberOfFrames);
+        int index = 0;
+        for (int j = 0; j < numberOfFrames; j++) {
+            frames.add(tmp[j][0]);
+        }
+        return new Animation<TextureRegion>(frameDelay, frames);
+    }
+
     private void resetGame() {
         waitStart = WAIT_START_COOLDOWN;
         wizardLife = 10;
@@ -540,6 +561,10 @@ public class WizardGame extends ApplicationAdapter {
 
     private Vector2 getPlayerPos() {
         return playerBody.getPosition().cpy().add(-6,-6);
+    }
+
+    private Vector2 getDrawPlayerPos() {
+        return getPlayerPos().sub(9,3);
     }
 
     private void createPlayer() {
@@ -681,6 +706,7 @@ public class WizardGame extends ApplicationAdapter {
         batch.setProjectionMatrix(camera.combined);
         handleInput();
         world.step(Gdx.graphics.getDeltaTime(), 6, 2);
+        animationDeltaTime += Gdx.graphics.getDeltaTime();
         playerBody.setAwake(true);
 
 		Gdx.gl.glClearColor(0, 0, 0, 1);
@@ -706,8 +732,9 @@ public class WizardGame extends ApplicationAdapter {
                     dashafter.setPosition(dashafterPos.x, dashafterPos.y);
                     dashafter.draw(batch);
                 }
-                Vector2 pos = getPlayerPos();
-                batch.draw(currentWizard, pos.x, pos.y);
+                Vector2 pos = getDrawPlayerPos();
+                TextureRegion currentFrame = anims.get(currentAnimation).getKeyFrame(animationDeltaTime, true);
+                batch.draw(currentFrame, pos.x, pos.y);
                 for (Bullet b : bullets) {
                     b.sprite.draw(batch);
                 }
@@ -743,8 +770,9 @@ public class WizardGame extends ApplicationAdapter {
                 }
             } else {
                 if (dialogActive) {
-                    Vector2 pos = getPlayerPos();
-                    batch.draw(currentWizard, pos.x, pos.y);
+                    Vector2 pos = getDrawPlayerPos();
+                    TextureRegion currentFrame = anims.get(currentAnimation).getKeyFrame(animationDeltaTime, true);
+                    batch.draw(currentFrame, pos.x, pos.y);
                     for (Entity e : enemies) {
                         e.draw(batch);
                     }
@@ -767,7 +795,7 @@ public class WizardGame extends ApplicationAdapter {
                 }
             }
         }
-        //debugRenderer.render(world,  new Matrix4(camera.combined));
+        debugRenderer.render(world,  new Matrix4(camera.combined));
 		batch.end();
         
         if (wizardLife > 0 && !isMenuShown) {
@@ -1219,70 +1247,69 @@ public class WizardGame extends ApplicationAdapter {
                 }
             }
         } else {
-            shootCooldown = shootCooldown - Gdx.graphics.getDeltaTime();
-            blockCooldown = blockCooldown - Gdx.graphics.getDeltaTime();
-            boolean canChangeDir = hitboxTimer < 0;
-            addSpeed = new Vector2();
-            Vector2 pos = playerBody.getPosition();
-            if (!canChangeDir) {
-                actualSpeed = 0;
-            }
-            if (isLeftPressed) {
-                if (canChangeDir) {
-                    if (isRight) {
-                        wizard.flip(true, false);
+            if (!dialogActive) {
+                shootCooldown = shootCooldown - Gdx.graphics.getDeltaTime();
+                blockCooldown = blockCooldown - Gdx.graphics.getDeltaTime();
+                boolean canChangeDir = hitboxTimer < 0;
+                currentAnimation = "idle";
+                addSpeed = new Vector2();
+                Vector2 pos = playerBody.getPosition();
+                if (!canChangeDir) {
+                    actualSpeed = 0;
+                }
+                if (isLeftPressed) {
+                    if (canChangeDir) {
+                        if (isRight) {
+                            flipAnimations();
+                        }
+                        isRight = false;
+                        inputVector.x = inputVector.x - 1;
+                        lastDirection = inputVector.cpy();
                     }
-                    isRight = false;
-                    inputVector.x = inputVector.x - 1;
-                    lastDirection = inputVector.cpy();
-                    currentWizard = wizard;
+                    currentAnimation = "run";
+                    playerBody.applyLinearImpulse(-actualSpeed, 0, pos.x, pos.y, true);
                 }
-                //addSpeed.add(-actualSpeed, 0);
-                playerBody.applyLinearImpulse(-actualSpeed, 0, pos.x, pos.y, true);
-            }
-            if (isRightPressed) {
-                if (canChangeDir) {
-                    if (!isRight) {
-                        wizard.flip(true, false);
+                if (isRightPressed) {
+                    if (canChangeDir) {
+                        if (!isRight) {
+                            flipAnimations();
+                        }
+                        isRight = true;   
+                        inputVector.x = inputVector.x + 1;
+                        lastDirection = inputVector.cpy();
                     }
-                    isRight = true;   
-                    inputVector.x = inputVector.x + 1;
-                    lastDirection = inputVector.cpy();
-                    currentWizard = wizard;
+                    currentAnimation = "run";
+                    playerBody.applyLinearImpulse(actualSpeed, 0, pos.x, pos.y, true);
                 }
-                // addSpeed.add(actualSpeed, 0);
-                playerBody.applyLinearImpulse(actualSpeed, 0, pos.x, pos.y, true);
-            }
-            if (isUpPressed) {
-                if (canChangeDir) {
-                    inputVector.y = inputVector.y - 1;
-                    lastDirection = inputVector.cpy();
-                    currentWizard = upWizard;
+                if (isUpPressed) {
+                    if (canChangeDir) {
+                        inputVector.y = inputVector.y - 1;
+                        lastDirection = inputVector.cpy();
+                    }
+                    currentAnimation = "run";
+                    playerBody.applyLinearImpulse(0, actualSpeed, pos.x, pos.y, true);
                 }
-                playerBody.applyLinearImpulse(0, actualSpeed, pos.x, pos.y, true);
-                // addSpeed.add(0, actualSpeed);
-            }
-            if (isDownPressed) {
-                if (canChangeDir) {
-                    inputVector.y = inputVector.y + 1;
-                    lastDirection = inputVector.cpy();
-                    currentWizard = downWizard;
+                if (isDownPressed) {
+                    if (canChangeDir) {
+                        inputVector.y = inputVector.y + 1;
+                        lastDirection = inputVector.cpy();
+                    }
+                    currentAnimation = "run";
+                    playerBody.applyLinearImpulse(0, -actualSpeed, pos.x, pos.y, true);
                 }
-                playerBody.applyLinearImpulse(0, -actualSpeed, pos.x, pos.y, true);
-                // addSpeed.add(0, -actualSpeed);
-            }
-            addSpeed.clamp(-actualSpeed,actualSpeed);
-            if (Gdx.input.isKeyPressed(Input.Keys.S)) {
-                useSlot(slotA); 
-            }
-            if (Gdx.input.isKeyPressed(Input.Keys.D) && !keyDLock) {
-                useSlot(slotB);
-            }
-            if (Gdx.input.isKeyPressed(Input.Keys.E)) {
-                action();
-                isAction = true;
-            } else {
-                isAction = false;
+                addSpeed.clamp(-actualSpeed,actualSpeed);
+                if (Gdx.input.isKeyPressed(Input.Keys.S)) {
+                    useSlot(slotA); 
+                }
+                if (Gdx.input.isKeyPressed(Input.Keys.D) && !keyDLock) {
+                    useSlot(slotB);
+                }
+                if (Gdx.input.isKeyPressed(Input.Keys.E)) {
+                    action();
+                    isAction = true;
+                } else {
+                    isAction = false;
+                }
             }
 
         }
@@ -1385,6 +1412,17 @@ public class WizardGame extends ApplicationAdapter {
     private void addEye() {
         Eye e = new Eye(eye, getRandomEdge(), 1, EYE_SPEED, "enemy", this);
         enemies.add(e);
+    }
+
+    private void flipAnimations() {
+        flipFrames(anims.get("idle").getKeyFrames());
+        flipFrames(anims.get("run").getKeyFrames());
+    }
+
+    private void flipFrames(Object[] frames) {
+        for (Object frame : frames) {
+            ((TextureRegion)frame).flip(true, false);
+        }
     }
 
     private Vector2 getRandomEdge() {
