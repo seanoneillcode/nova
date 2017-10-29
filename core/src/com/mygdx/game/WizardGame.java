@@ -96,8 +96,10 @@ public class WizardGame extends ApplicationAdapter {
     public static final float EYE_SPEED = 36f;
     private static final float HITBOX_COOLDOWN = 0.15f;
     private static final float HITBOX_TIMER = 0.3f;
-    private static final float DASH_TIMER = 2.0f;
-    private static final float INITIAL_DASH = 2.4f;
+    private static final float DASH_TIMER = 0.8f;
+    private static final float PREPARE_DASH = 0.7f;
+    private static final float MID_DASH = 0.4f;
+    private static final float LAND_DASH = 0.15f;
     private static final float DASH_FRICTION = 0.92f;
     private static final float MAX_SHOOT_COOLDOWN = 0.8f;
     private static final float MAX_BLOCK_COOLDOWN = 0.5f;
@@ -227,6 +229,9 @@ public class WizardGame extends ApplicationAdapter {
         anims = new HashMap<String,Animation<TextureRegion>>();
         anims.put("idle", loadAnimation("blue-idle.png", 2, 0.2f));
         anims.put("run", loadAnimation("blue-run.png", 8, 0.1f));
+        anims.put("prepare", loadAnimation("prepare.png", 4, 0.25f));
+        anims.put("mid-dash", loadAnimation("mid-dash.png", 1, 1f));
+        anims.put("land", loadAnimation("land.png", 5, 0.05f));
         currentAnimation = "idle";
 
         damageTex = new Texture("damage.png");
@@ -1182,10 +1187,11 @@ public class WizardGame extends ApplicationAdapter {
         }
         if (slot.equals("dash")) {
             if (dashTimer < 0) {
-                dashMovement = lastDirection.cpy().scl(INITIAL_DASH);
+                dashMovement = lastDirection.cpy().scl(100000000);
                 dashMovement.y = dashMovement.y * -1;
                 dashTimer = DASH_TIMER;
                 dashafterPos = getPlayerPos();
+                animationDeltaTime = 0;
             }
         }
     }
@@ -1254,9 +1260,11 @@ public class WizardGame extends ApplicationAdapter {
                 addSpeed = new Vector2();
                 Vector2 pos = playerBody.getPosition();
                 if (!isLeftPressed && !isRightPressed && ! isUpPressed && !isDownPressed) {
-                    playerBody.setLinearVelocity(0,0);
+                    if (dashTimer < LAND_DASH) {
+                        playerBody.setLinearVelocity(0,0);
+                    }
                 }
-                if (!canChangeDir) {
+                if (!canChangeDir || dashTimer > LAND_DASH) {
                     actualSpeed = 0;
                 }
                 if (isLeftPressed) {
@@ -1299,7 +1307,23 @@ public class WizardGame extends ApplicationAdapter {
                     currentAnimation = "run";
                     playerBody.applyLinearImpulse(0, -actualSpeed, pos.x, pos.y, true);
                 }
-                addSpeed.clamp(-actualSpeed,actualSpeed);
+                if (dashTimer < LAND_DASH) {
+                    addSpeed.clamp(-actualSpeed,actualSpeed);
+                } else {
+//                    Vector2 pos = playerBody.getPosition();
+                    if (dashTimer < PREPARE_DASH) {
+                        dashMovement = dashMovement.scl(0.8f);
+                        playerBody.applyLinearImpulse(dashMovement.x, dashMovement.y, pos.x, pos.y, true);
+                    } else {
+                        currentAnimation = "prepare";
+                    }
+                    if (dashTimer < PREPARE_DASH && dashTimer >= MID_DASH) {
+                        currentAnimation = "mid-dash";
+                    }
+                    if (dashTimer < MID_DASH && dashTimer >= LAND_DASH) {
+                        currentAnimation = "land";
+                    }
+                }
                 if (Gdx.input.isKeyPressed(Input.Keys.S)) {
                     useSlot(slotA); 
                 }
@@ -1419,6 +1443,9 @@ public class WizardGame extends ApplicationAdapter {
     private void flipAnimations() {
         flipFrames(anims.get("idle").getKeyFrames());
         flipFrames(anims.get("run").getKeyFrames());
+        flipFrames(anims.get("prepare").getKeyFrames());
+        flipFrames(anims.get("mid-dash").getKeyFrames());
+        flipFrames(anims.get("land").getKeyFrames());
     }
 
     private void flipFrames(Object[] frames) {
